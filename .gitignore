@@ -1,2 +1,7 @@
 .DS_Store
 data/
+build/
+dist/
+single_photons.egg-info
+__pycache__
+*.pyc

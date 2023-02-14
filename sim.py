@@ -7,31 +7,32 @@ Created on Wed Dec  8 19:53:53 2021
 
 import math
 import numpy as np
-import quantum_gaussian_toolbox as qgt
+from single_photons import gaussian_state, gaussian_dynamics
+from single_photons.utils.operations import *
 import matplotlib.pyplot as plt
 
 
 # parameters and auxiliary variables
 
 # mechanical mode freqs
-omega1 = 1;
-omega2 = 0.9;
+omega1 = 1
+omega2 = 0.9
 
 # optical loss rate
-kappa = 3*omega1;
+kappa = 3*omega1
 
 # feedback gain
-g_cd1 = 0.8;
-g_cd2 = 0.8;
+g_cd1 = 0.8
+g_cd2 = 0.8
 
-G1 = 0.16*omega1; # effective optomechanical coupling
-G2 = 0.10*omega1;
+G1 = 0.16*omega1 # effective optomechanical coupling
+G2 = 0.10*omega1
 
-gamma1 = 0.00004*omega1; # mechanical mode damping coefficients
-gamma2 = 0.00003*omega1;
+gamma1 = 0.00004*omega1 # mechanical mode damping coefficients
+gamma2 = 0.00003*omega1
 
-Gamma11 = gamma1 + g_cd1*G1*omega1/kappa; # effective damping matrix elements
-Gamma22 = gamma2 + g_cd2*G2*omega2/kappa;
+Gamma11 = gamma1 + g_cd1*G1*omega1/kappa # effective damping matrix elements
+Gamma22 = gamma2 + g_cd2*G2*omega2/kappa
 Gamma12 = g_cd1*G2*omega2/kappa;
 Gamma21 = g_cd2*G1*omega1/kappa;
 
@@ -44,11 +45,11 @@ D22 = gamma2*(2*n2+1) + G2**2/kappa;
 step = 0.05/omega1; #time step
 nsteps = 7001;
 t = np.linspace(0, (nsteps-1)*step, nsteps);
-nbar = {};
-n_mean = {};
-n_variance = {};
-lower_fill1 = np.zeros(len(t));
-lower_fill2 = np.zeros(len(t));
+nbar = {}
+n_mean = {}
+n_variance = {}
+lower_fill1 = np.zeros(len(t))
+lower_fill2 = np.zeros(len(t))
 
 # boolean for logarithmic scale (better visualization)
 logscale = bool(1)
@@ -65,12 +66,12 @@ D = np.array([[0, 0, 0, 0],
              [0, D12, 0, D22]]);
 
 # initial state
-particle1 = qgt.gaussian_state("thermal", n1) # mode 1 initial state
-particle2 = qgt.gaussian_state("thermal", n2) # mode 2 initial state
-initial = qgt.tensor_product([particle1, particle2]) # total initial state
+particle1 = gaussian_state("thermal", n1) # mode 1 initial state
+particle2 = gaussian_state("thermal", n2) # mode 2 initial state
+initial = tensor_product([particle1, particle2]) # total initial state
 
 #simulation
-simulation = qgt.gaussian_dynamics(A, D, N, initial)
+simulation = gaussian_dynamics(A, D, N, initial)
 states = simulation.unconditional_dynamics(t)
 
 #nbar = states.occupation_number()
@@ -125,3 +126,4 @@ plt.fill_between(t[:], var_2[0,:], var_2[1,:], color = 'blue', alpha = 0.15);
 plt.hlines(y=math.log(n_mec_final[0]), xmin=0, xmax=(nsteps-1)*step, colors='red', linestyles='-', lw=2)
 plt.hlines(y=math.log(n_mec_final[1]), xmin=0, xmax=(nsteps-1)*step, colors='deepskyblue', linestyles='-', lw=2)
 plt.tight_layout()
+plt.show()

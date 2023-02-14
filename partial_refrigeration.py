@@ -13,9 +13,9 @@ from matplotlib import cm
 from matplotlib.patches import Circle
 
 import numpy as np
-import quantum_gaussian_toolbox as qgt
-
-
+from single_photons.states import thermal, vacuum, squeezed
+from single_photons.utils.operations import *
+from single_photons import gaussian_dynamics
 ##### Parameters
 omega = 2*np.pi                                 # Particle natural frequency 
 gamma = 2*np.pi*0.3                             # Mechanical damping constant 
@@ -41,12 +41,12 @@ D = np.diag([0, gamma*(2*n_th+1), 2*kappa, 2*kappa]);        # Diffusion matrix
 
 
 ##### Simulation
-cavity   = qgt.squeezed(r=1.2)          # Initial cavity state
-particle = qgt.thermal(n_0)             # Initial particle state
+cavity   = squeezed(r=1.2)          # Initial cavity state
+particle = thermal(n_0)             # Initial particle state
 
-initial  = qgt.tensor_product([particle, cavity]) # Initial state
+initial  = tensor_product([particle, cavity]) # Initial state
                                
-simulation = qgt.gaussian_dynamics(A, D, N, initial) # Create instance of time evolution of gaussian state
+simulation = gaussian_dynamics(A, D, N, initial) # Create instance of time evolution of gaussian state
 states = simulation.unconditional_dynamics(t)        # Simulate
 
 n_mec = np.zeros(len(t))            # List to store occupation numbers
@@ -80,7 +80,7 @@ plt.grid(True, which="both", ls="-", alpha = 0.2)
 
 plt.title('Number operator moments')
 
-plt.savefig("occupation_number_damped_unconditional_dynamics", format='svg')
+plt.savefig("occupation_number_damped_unconditional_dynamics.pdf",dpi=300)
 
 
 
