@@ -9,7 +9,7 @@ from scipy.linalg import fractional_matrix_power
 from .gaussian_state import gaussian_state
 from single_photons.utils.is_a_function import is_a_function
 from .lyapunov import lyapunov_ode_conditional, lyapunov_ode_unconditional
-
+from single_photons.states import *
 
 class gaussian_dynamics:
     """Class simulating unconditional and conditional dynamics of a gaussian state following a set of Langevin and Lyapunov equations
@@ -371,7 +371,7 @@ class gaussian_dynamics:
         # Omega_n = self.initial_state.Omega                                    # Symplectic form matrix for the whole system
         # C = np.matmul(np.matmul(temp, Omega_m), C_int_T);                     # Extra matrix on the Lyapunov equation
         # Gamma = -np.matmul(np.matmul(np.matmul(temp, V_bath),C_int_T),Omega_n)# Extra matrix on the Lyapunov equation
-        
+        print(self.initial_state.N_modes)
         N_measured = self.initial_state.N_modes                                 # Number of monitored modes (currently all modes)
         Omega = self.initial_state.Omega                                        # Symplectic form matrix for the whole system
         
@@ -382,9 +382,9 @@ class gaussian_dynamics:
         if rho_bath is None: rho_bath = vacuum(N_measured)                      # If no state for the environment was indicated, use  as default value a tensor product of vacuum states
         
         assert N_measured == len(phi_list), "conditional_dynamics can not infer the number of modes to be measured, number of measurement parameters is different from rotation angles"
-        
+        print(rho_bath.N_modes)
+
         assert rho_bath.N_modes == N_measured, "The number of bath modes does not match the number of monitored modes"
-        
         assert N_measured <= self.initial_state.N_modes, "There are more monitored modes, than there are on the initial state"
         
         V_bath = rho_bath.V                                                     # Covariance matrix for the bath's state

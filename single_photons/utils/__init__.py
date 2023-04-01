@@ -6,7 +6,7 @@ from .unitaries import displace, squeeze, rotate, phase, beam_splitter, two_mode
 
 __all__ = [
     'is_a_function',
-    'operatoions',
+    'operations',
     'properties',
     'unitaries'
 ]

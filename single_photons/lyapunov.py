@@ -21,7 +21,7 @@ def lyapunov_ode_unconditional(t, V_old_vector, A, D):
     V_old = np.reshape(V_old_vector, (M, M));                                      # Vector -> matrix
     
     dVdt = np.matmul(A, V_old) + np.matmul(V_old, A_T) + D;                     # Calculate how much the CM derivative in this time step
-    
+
     dVdt_vector = np.reshape(dVdt, (M**2,));                                     # Matrix -> vector
     return dVdt_vector
 
@@ -41,7 +41,6 @@ def lyapunov_ode_conditional(t, V_old_vector, A, D, B):
     # chi = np.matmul(np.transpose(chi), chi)
     # chi = np.matmul( np.matmul(V_old, np.transpose(C)) + np.transpose(Gamma),  np.matmul(C, V_old) + Gamma )    # Auxiliar matrix
     chi = np.matmul( np.matmul( np.matmul(V_old, B), np.transpose(B)), V_old)    # Auxiliar matrix
-    
     dVdt = np.matmul(A, V_old) + np.matmul(V_old, A_T) + D - chi;               # Calculate how much the CM derivative in this time step
     
     dVdt_vector = np.reshape(dVdt, (M**2,));                                    # Matrix -> vector

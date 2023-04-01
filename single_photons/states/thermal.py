@@ -1,5 +1,5 @@
 import numpy as np
-from single_photons import gaussian_state
+from single_photons.gaussian_state import gaussian_state
 
 def thermal(nbar=1):
     """Returns a thermal state with mean occupation number nbar"""
