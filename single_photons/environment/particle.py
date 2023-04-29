@@ -2,8 +2,17 @@ import numpy as np
 T = 300.0 # Kelvin
 kb = 1.38064852e-11 # picoJoule/Kelvin
 
-class TweezedParticle:
-    def __init__(self, radius, pressure, omega, T=300, rho=2200*1e-18, elec_num=20):       
+class Particle:
+    def __init__(self, omega, gamma, ):  
+        self.__omega__ = omega
+        self.__gamma__ = gamma
+        self.A = np.array([[0, self.__omega__],
+                           [-self.__omega__, -self.__gamma__]])
+        self.B = np.array([[0], [1]])
+        self.C = np.array([[1, 0]])
+
+        
+                 
         self._radius_ = radius #75e-3                     # particle radius         micrometers
         self._pressure_ = pressure
         self.T = T
