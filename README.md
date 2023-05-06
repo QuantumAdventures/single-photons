@@ -14,13 +14,13 @@ Well, now, how can you run this code? Follow the next steps.
     * Via SSH:
 
     ```bash
-    git clone https://github.com/QuantumAdventures/optical-bottle-beam.git
+    git clone https://github.com/QuantumAdventures/single-photon.git
     ```
 
     * Via HTTPS:
 
     ```bash
-    git clone git@github.com:QuantumAdventures/optical-bottle-beam.git
+    git clone git@github.com:QuantumAdventures/single-photon.git
     ```
 
     * Or, by downloading the .zip of the repo and unziping in your computer.
