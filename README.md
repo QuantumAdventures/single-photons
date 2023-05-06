@@ -8,7 +8,7 @@ This repo includes the code to simulate a tweezed particle controlled by an opti
 
 ## Installation
 
-Well, now, how can you run this code? Follow the next steps.
+Well, now, how can you run this code?
 
 1. First clone this repo in your computer. This can be done
     * Via SSH:
