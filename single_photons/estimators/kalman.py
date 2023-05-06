@@ -26,19 +26,16 @@ class KalmanFilter:
         self.gainMatrices=[]
         self.errors=[]
          
-    def propagateDynamics(self,inputValue):
+    def propagate_dynamics(self,inputValue):
          
         xk_minus=self.A*self.estimates_aposteriori[self.t_i]+self.B*inputValue
         Pk_minus=self.A*self.error_covariance_aposteriori[self.t_i]*(self.A.T)+self.Q
-         
         self.estimates_apriori.append(xk_minus)
-        self.error_covariance_apriori.append(Pk_minus)
-         
+        self.error_covariance_apriori.append(Pk_minus)         
         self.t_i=self.t_i+1
      
-    def computeAposterioriEstimate(self,currentMeasurement):
+    def compute_aposteriori(self,currentMeasurement):
         Kk=self.error_covariance_apriori[self.t_i-1]*(self.C.T)*np.linalg.inv(self.R+self.C*self.error_covariance_apriori[self.t_i-1]*(self.C.T))
-         
         error_k=currentMeasurement-self.C*self.estimates_apriori[self.t_i-1]
         xk_plus=self.estimates_apriori[self.t_i-1]+Kk*error_k
         IminusKkC=np.matrix(np.eye(self.x0.shape[0]))-Kk*self.C
