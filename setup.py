@@ -25,6 +25,8 @@ setup(
      ],
     install_requires=[
         'numpy',
-        'pytest'
+        'pytest',
+        'matplotlib',
+        'seaborn'
     ]
 )
