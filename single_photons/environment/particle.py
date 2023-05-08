@@ -27,5 +27,5 @@ class Particle:
         backaction_force = self.__backaction_fluctuation__()
         thermal_force = np.sqrt(2*self.__gamma__)*np.random.normal()
         state_dot = np.matmul(self.A,states) + self.B*control
-        states = states + state_dot*delta_t #+ self.G*np.sqrt(delta_t)*(thermal_force+backaction_force)
+        states = states + state_dot*delta_t + self.G*np.sqrt(delta_t)*(thermal_force+backaction_force)
         return states

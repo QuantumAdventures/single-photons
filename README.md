@@ -42,8 +42,8 @@ pip install -r requirements.txt
 Now, with everything set, the notebooks can be executed. To create a new script or notebook importing some of the classes, just insert the following imports
 
 ```python
-from single_photon.enviroment import Particle
-from single_photon.estimator import KalmanFilter
+from single_photons.enviroment import Particle
+from single_photons.estimator import KalmanFilter
 ```
 
 
