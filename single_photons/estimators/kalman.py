@@ -35,7 +35,7 @@ class KalmanFilter:
         self.t_i=self.t_i+1
      
     def compute_aposteriori(self,currentMeasurement):
-        Kk=self.error_covariance_apriori[self.t_i-1]*(self.C.T)*np.linalg.inv(self.R+self.C*self.error_covariance_apriori[self.t_i-1]*(self.C.T))
+        Kk=self.error_covariance_apriori[self.t_i-1]*(self.C.T)*np.linalg.pinv(self.R+self.C*self.error_covariance_apriori[self.t_i-1]*(self.C.T))
         error_k=currentMeasurement-self.C*self.estimates_apriori[self.t_i-1]
         xk_plus=self.estimates_apriori[self.t_i-1]+Kk*error_k
         IminusKkC=np.matrix(np.eye(self.x0.shape[0]))-Kk*self.C
