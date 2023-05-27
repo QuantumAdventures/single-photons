@@ -26,9 +26,9 @@ class Cavity_Particle:
         return self.backaction*(np.sqrt(self.eta_det)*np.random.normal()+np.sqrt(1-self.eta_det)*np.random.normal())
 
     def step(self, states, alpha_in = 0, control=0.0, delta_t=50e-2):
-        if states.size > 2:
-            raise ValueError('States size for this specific system is equal to two \
-                (position and velocity)')
+        if states.size > 4:
+            raise ValueError('States size for this specific system is equal to four \
+                (two optical quadratures, position and velocity)')
         backaction_force = self.__backaction_fluctuation__()
         thermal_force = np.sqrt(2*self.__gamma__)*np.random.normal()
         x_in = np.sqrt(self.__kappa__)*(np.conjugate(alpha_in) + alpha_in)
