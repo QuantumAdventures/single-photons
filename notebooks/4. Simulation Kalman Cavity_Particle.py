@@ -17,10 +17,10 @@ from single_photons.environment import Cavity_Particle
 # In[2]:
 
 
-omega = 2*np.pi*1e5
-omega_c = 2*np.pi*3e5
+omega = 2*np.pi*1e4
+omega_c = 2*np.pi*(np.pi*1e4)
 T = 2*np.pi/omega
-t = np.arange(0, 1000*T, T/400)
+t = np.arange(0, 10*T, T/400)
 N = t.shape[0]
 delta_t = np.diff(t)[0]
 
@@ -28,19 +28,21 @@ delta_t = np.diff(t)[0]
 # In[56]:
 
 
-gamma = 8500
-kappa = 1e4
-g_cs = 10
+gamma = 10000
+kappa = 1e5
+g_cs = 1e-5
 coupling = 0.01
 eta_detec=0.9
 env = Cavity_Particle(omega, gamma, omega_c, kappa, g_cs, coupling, eta_detection=eta_detec)
 
-pulse_amplitude = 10
+pulse_amplitude = 1e-17
 pulse_center = 200
 pulse_width = 30
 alpha_in = []
 for i in range(t.shape[0]):
-    alpha_in.append(pulse_amplitude*np.exp(-(i-pulse_center)**2/(2*pulse_width**2)))
+    alpha = i*(t.shape[0]-i)*pulse_amplitude
+    #alpha = pulse_amplitude*np.exp(-(i-pulse_center)**2/(2*pulse_width**2)) + pulse_amplitude*np.exp(-(i-(pulse_center+500))**2/(2*pulse_width**2))
+    alpha_in.append(alpha)
 
 # In[57]:
 
@@ -90,24 +92,24 @@ for i in tqdm(range(t.shape[0])):
 
 # In[61]:
 
-'''
-fig = plt.Figure()
+fig1 = plt.Figure()
 plt.title('Position')
-plt.plot(t[:1000], measured_states[:1000])
-plt.plot(t[:1000], estimated_states[:1000,2])
-plt.plot(t[:1000], new_states[:1000,2])
+plt.plot(t[:], measured_states[:])
+plt.plot(t[:], estimated_states[:,2])
+plt.plot(t[:], new_states[:,2])
 plt.grid()
 plt.legend(['Measured', 'Simulated', 'Estimated'])
 plt.show()
-'''
+
 
 # In[62]:
 
-
-fig = plt.Figure()
+plt.figure()
+#fig2 = plt.Figure()
 plt.title('X quadrature')
-plt.plot(t[:1000], new_states[:1000,0])
+plt.plot(t[:], estimated_states[:,0])
+plt.plot(t[:], new_states[:,0])
 plt.grid()
-plt.legend(['Estimated'])
+plt.legend(['Simulated','Estimated'])
 plt.show()
 
