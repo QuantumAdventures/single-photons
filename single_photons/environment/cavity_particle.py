@@ -3,16 +3,16 @@ import single_photons.utils.constants as ct
 
 
 class Cavity_Particle:
-    def __init__(self, omega_p, gamma, omega_c, kappa, g_cs, coupling, eta_detection=1, radius=147e-9, rho=2200):  
+    def __init__(self, omega_p, gamma, detuning, kappa, g_cs, coupling, eta_detection=1, radius=147e-9, rho=2200):  
         self.__omega_p__ = omega_p
         self.__gamma__ = gamma
-        self.__omega_c__ = omega_c
+        self.__detuning__ = detuning
         self.__kappa__ = kappa
         self.__g_cs__ = g_cs
-        self.A = np.array([[-self.__kappa__/2, self.__omega_c__, 0, 0],
-                           [-self.__omega_c__, -self.__kappa__/2, self.__g_cs__, 0],
+        self.A = np.array([[-self.__kappa__/2, self.__detuning__, 0, 0],
+                           [-self.__detuning__, -self.__kappa__/2, -2*self.__g_cs__, 0],
                            [0, 0, 0, self.__omega_p__],
-                           [self.__g_cs__, 0, -self.__omega_p__, -self.__gamma__]])
+                           [-2*self.__g_cs__, 0, -self.__omega_p__, -self.__gamma__]])
         self.B = np.array([[0], [0], [0], [1]])
         self.C = np.array([[0, 0, 1, 0]])
         self.G = np.array([[0], [0], [0], [1]])

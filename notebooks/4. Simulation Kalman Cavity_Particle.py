@@ -17,8 +17,8 @@ from single_photons.environment import Cavity_Particle
 # In[2]:
 
 
-omega = 2*np.pi*1e4
-omega_c = 2*np.pi*(np.pi*1e4)
+omega = 2*np.pi*1e5
+detuning = 2*np.pi*2e4
 T = 2*np.pi/omega
 t = np.arange(0, 10*T, T/400)
 N = t.shape[0]
@@ -28,20 +28,20 @@ delta_t = np.diff(t)[0]
 # In[56]:
 
 
-gamma = 10000
-kappa = 1e5
-g_cs = 1e-5
+gamma = 1000
+kappa = 10
+g_cs = 1e-3
 coupling = 0.01
 eta_detec=0.9
-env = Cavity_Particle(omega, gamma, omega_c, kappa, g_cs, coupling, eta_detection=eta_detec)
+env = Cavity_Particle(omega, gamma, detuning, kappa, g_cs, coupling, eta_detection=eta_detec)
 
-pulse_amplitude = 1e-17
+pulse_amplitude = 1e-16
 pulse_center = 200
 pulse_width = 30
 alpha_in = []
 for i in range(t.shape[0]):
     alpha = i*(t.shape[0]-i)*pulse_amplitude
-    #alpha = pulse_amplitude*np.exp(-(i-pulse_center)**2/(2*pulse_width**2)) + pulse_amplitude*np.exp(-(i-(pulse_center+500))**2/(2*pulse_width**2))
+    #alpha = pulse_amplitude*np.exp(-(i-pulse_center)**2/(2*pulse_width**2)) + pulse_amplitude*np.exp(-(i-(pulse_center+t.shape[0]/2))**2/(2*pulse_width**2))
     alpha_in.append(alpha)
 
 # In[57]:
