@@ -10,16 +10,29 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from single_photons.estimators.kalman import KalmanFilter
-from single_photons.utils.constants import *
+import single_photons.utils.constants as ct
 from single_photons.environment import Cavity_Particle
 
 
 # In[2]:
 
+T = 293.15
+m_gas = ct.amu*(0.01*40 + 0.78*28 + 0.21*32)
+v_gas = np.sqrt(3*ct.kb*T/m_gas)
+p = 1e2
+R = 150e-9
+rho = 2200
+m_p = 4/3*np.pi*R**3*rho
+tweezer_wavelength = 1.55e-6
+tweezer_freq = 2*np.pi*ct.c/tweezer_wavelength
+index_refraction = 1.4440
+tweezer_power = 0.2
+tweezer_waist = 0.6e-6
+cavity_waist = 100e-6
+cavity_length = 50e-3
+cavity_linewidth = 2*np.pi*2e5
+detuning = 2*np.pi*1e5
 
-omega = 2*np.pi*1e5
-detuning = 2*np.pi*2e4
-T = 2*np.pi/omega
 t = np.arange(0, 10*T, T/400)
 N = t.shape[0]
 delta_t = np.diff(t)[0]
@@ -27,13 +40,24 @@ delta_t = np.diff(t)[0]
 
 # In[56]:
 
+cavity_freq = detuning + tweezer_freq
 
-gamma = 1000
-kappa = 10
-g_cs = 1e-3
+gamma = 15.8*R**2*p/(m_p*v_gas)
+omega = np.sqrt(12/np.pi)*np.sqrt((index_refraction-1)/(index_refraction+2))**3*\
+    np.sqrt(tweezer_power)/(tweezer_waist**2*np.sqrt(rho*ct.c))
+g_cs = np.power(12/np.pi,1/4)*np.power((index_refraction-1)/(index_refraction+2),3/4)*\
+    np.power(tweezer_power*R**6*cavity_freq**6/(ct.c**5*rho),1/4)/(np.sqrt(cavity_length)*\
+                                                                cavity_waist)
+
 coupling = 0.01
 eta_detec=0.9
-env = Cavity_Particle(omega, gamma, detuning, kappa, g_cs, coupling, eta_detection=eta_detec)
+
+T = 2*np.pi/omega
+t = np.arange(0, 10*T, T/400)
+N = t.shape[0]
+delta_t = np.diff(t)[0]
+env = Cavity_Particle(omega, gamma, detuning, cavity_linewidth, g_cs, coupling,\
+                      eta_detection = eta_detec)
 
 pulse_amplitude = 1e-16
 pulse_center = 200
@@ -54,8 +78,8 @@ std_detection = 100
 # In[58]:
 
 
-Q = np.array([[kappa, 0, 0, 0],
-              [0, kappa, 0, 0],
+Q = np.array([[cavity_linewidth, 0, 0, 0],
+              [0, cavity_linewidth, 0, 0],
               [0, 0, 0, 0],
               [0, 0, 0, variance_process]])
 R = np.array([[np.power(std_detection,2)]])
