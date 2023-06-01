@@ -30,17 +30,11 @@ tweezer_power = 0.2
 tweezer_waist = 0.6e-6
 cavity_waist = 100e-6
 cavity_length = 50e-3
-cavity_linewidth = 2*np.pi*2e5
+cavity_linewidth = 2*np.pi*1e5
 detuning = 2*np.pi*1e5
-
-t = np.arange(0, 10*T, T/400)
-N = t.shape[0]
-delta_t = np.diff(t)[0]
-
-
-# In[56]:
-
 cavity_freq = detuning + tweezer_freq
+coupling = 0.01
+eta_detec=0.9
 
 gamma = 15.8*R**2*p/(m_p*v_gas)
 omega = np.sqrt(12/np.pi)*np.sqrt((index_refraction-1)/(index_refraction+2))**3*\
@@ -49,23 +43,24 @@ g_cs = np.power(12/np.pi,1/4)*np.power((index_refraction-1)/(index_refraction+2)
     np.power(tweezer_power*R**6*cavity_freq**6/(ct.c**5*rho),1/4)/(np.sqrt(cavity_length)*\
                                                                 cavity_waist)
 
-coupling = 0.01
-eta_detec=0.9
-
-T = 2*np.pi/omega
-t = np.arange(0, 10*T, T/400)
+period = 2*np.pi/omega
+t = np.arange(0, 100*period, period/400)
 N = t.shape[0]
 delta_t = np.diff(t)[0]
+
+
+# In[56]:
+
 env = Cavity_Particle(omega, gamma, detuning, cavity_linewidth, g_cs, coupling,\
                       eta_detection = eta_detec)
 
-pulse_amplitude = 1e-16
-pulse_center = 200
+pulse_amplitude = 1
+pulse_center = 600
 pulse_width = 30
 alpha_in = []
 for i in range(t.shape[0]):
-    alpha = i*(t.shape[0]-i)*pulse_amplitude
-    #alpha = pulse_amplitude*np.exp(-(i-pulse_center)**2/(2*pulse_width**2)) + pulse_amplitude*np.exp(-(i-(pulse_center+t.shape[0]/2))**2/(2*pulse_width**2))
+    #alpha = i*(t.shape[0]-i)*pulse_amplitude
+    alpha = pulse_amplitude*np.exp(-(i-pulse_center)**2/(2*pulse_width**2)) + pulse_amplitude*np.exp(-(i-(pulse_center+t.shape[0]/2))**2/(2*pulse_width**2))
     alpha_in.append(alpha)
 
 # In[57]:
