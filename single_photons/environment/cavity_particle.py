@@ -31,8 +31,10 @@ class Cavity_Particle:
                 (two optical quadratures, position and velocity)')
         backaction_force = self.__backaction_fluctuation__()
         thermal_force = np.sqrt(2*self.__gamma__)*np.random.normal()
-        x_in = np.sqrt(self.__kappa__)*delta_t*(np.conjugate(alpha_in) + alpha_in)
-        y_in = 1j*np.sqrt(self.__kappa__)*delta_t*(np.conjugate(alpha_in) - alpha_in)
+        x_in = np.sqrt(self.__kappa__)*delta_t*(np.random.normal() +\
+                                                np.conjugate(alpha_in) + alpha_in)
+        y_in = 1j*np.sqrt(self.__kappa__)*delta_t*(np.random.normal() +\
+                                                   np.conjugate(alpha_in) - alpha_in)
         optical_input = np.array([[x_in], [y_in], [0], [0]])
         state_dot = np.matmul(self.A,states) + self.B*control
         states = states + state_dot*delta_t + self.G*np.sqrt(delta_t)*(thermal_force+backaction_force) + optical_input
