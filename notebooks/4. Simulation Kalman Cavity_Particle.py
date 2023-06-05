@@ -100,15 +100,16 @@ measured_states = np.zeros((N))
 estimated_states = np.zeros((N, 4))
 estimated_states[0,:] = estimation.reshape((4))
 estimation = estimation.reshape((4,1))
+control = np.array([[0]])
 kalman = KalmanFilter(estimation, P0, Ad, env.B*delta_t, env.C, Q, R)
 for i in tqdm(range(t.shape[0])):
     new_states[i,:] = states[:,0]
     measured_states[i] = states[2, 0] + std_detection*np.random.normal()
-    control = -g_fb*measured_states[i]
-    kalman.propagate_dynamics(np.array([[control]]))
+    kalman.propagate_dynamics(control)
     kalman.compute_aposteriori(measured_states[i])
     estimated_states[i,:] = kalman.estimates_aposteriori[i][:,0].reshape((4))
     estimation = estimated_states[i,:].reshape((4,1))    
+    control = -g_fb*estimation[2]
     states = env.step(states, alpha_in = alpha_in[i], control = control, delta_t = delta_t)
 
 
