@@ -146,10 +146,12 @@ for i in tqdm(range(t.shape[0])):
 plt.close("all")
 fig1 = plt.Figure()
 plt.title("Position")
-plt.plot(t[1:], measured_states[1:])
-plt.plot(t[1:], estimated_states[1:, 2])
-plt.plot(t[1:], new_states[1:, 2])
-plt.plot(t[1:], controls[1:])
+plt.plot(t[1:], measured_states[1:], alpha = 0.95)
+plt.plot(t[1:], estimated_states[1:, 2], alpha = 0.95)
+plt.plot(t[1:], new_states[1:, 2],alpha = 0.95)
+C = max(controls)/4
+controls = [x/C for x in controls]
+plt.plot(t[1:], controls[1:], alpha = 0.5)
 plt.grid()
 plt.legend(["Measured", "Estimated", "Simulated", "Control input"])
 plt.show()
