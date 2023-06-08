@@ -5,6 +5,7 @@
 
 
 import numpy as np
+from control import dare
 import scipy
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -42,27 +43,27 @@ omega = (
 )
 coupling = 9*pol_permit_ratio**2*tweezer_power*tweezer_freq**5/\
     (128*np.pi**2*ct.c**6*m_p*omega)
+#coupling = coupling/(ct.hbar/(2*m_p*omega))
 
 detuning = 1 * omega
-cavity_linewidth = 3 * omega
-
+cavity_linewidth = omega
 cavity_freq = detuning + tweezer_freq
+
 g_cs = (
     np.power(12 / np.pi, 1 / 4)
     * np.power((index_refraction - 1) / (index_refraction + 2), 3 / 4)
     * np.power(tweezer_power * R**6 * cavity_freq**6 / (ct.c**5 * rho), 1 / 4)
     / (np.sqrt(cavity_length) * cavity_waist)
 )
-
 g_fb = 1e6
 
 period = 2 * np.pi / omega
-t = np.arange(0, 10 * period, period / 1000)
+t = np.arange(0, 100 * period, period / 3000)
 N = t.shape[0]
 delta_t = np.diff(t)[0]
 
 
-# In[56]:
+# In[56]-2
 
 env = Cavity_Particle(
     omega,
@@ -112,13 +113,14 @@ R = np.array([[np.power(std_detection, 2)]])
 # In[59]:
 
 Ad = scipy.linalg.expm(env.A * delta_t)
+(omega_ss,L,G) = dare(Ad,env.B,Q,omega/g_fb**2)
 
 # In[60]:
 
-
+x0 = 15
 P0 = 1*np.matrix(np.eye(4))
-estimation = np.matrix([[0], [0], [0], [0]])
-states = np.array([[0], [0], [5.0], [0.0]])
+estimation = np.matrix([[0], [0], [x0], [0]])
+states = np.array([[0], [0], [x0], [0.0]])
 K = np.array([[0, 0, 1, 1e5]])
 new_states = np.zeros((N, 4))
 measured_states = np.zeros((N))
@@ -126,6 +128,7 @@ estimated_states = np.zeros((N, 4))
 estimated_states[0, :] = estimation.reshape((4))
 estimation = estimation.reshape((4, 1))
 control = np.array([[0]])
+controls = []
 kalman = KalmanFilter(estimation, P0, Ad, env.B * delta_t, env.C, Q * delta_t, R)
 for i in tqdm(range(t.shape[0])):
     new_states[i, :] = states[:, 0]
@@ -134,7 +137,8 @@ for i in tqdm(range(t.shape[0])):
     kalman.compute_aposteriori(measured_states[i])
     estimated_states[i, :] = kalman.estimates_aposteriori[i][:, 0].reshape((4))
     estimation = estimated_states[i, :].reshape((4, 1))
-    control = -g_fb * estimation[3]
+    control = -np.matmul(G, estimation)
+    controls.append(float(control))
     states = env.step(states, alpha_in=alpha_in[i], control=control, delta_t=delta_t)
 
 
@@ -145,8 +149,9 @@ plt.title("Position")
 plt.plot(t[1:], measured_states[1:])
 plt.plot(t[1:], estimated_states[1:, 2])
 plt.plot(t[1:], new_states[1:, 2])
+plt.plot(t[1:], controls[1:])
 plt.grid()
-plt.legend(["Measured", "Estimated", "Simulated"])
+plt.legend(["Measured", "Estimated", "Simulated", "Control input"])
 plt.show()
 
 # In[62]:
