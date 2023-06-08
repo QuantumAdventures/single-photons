@@ -17,23 +17,22 @@ from single_photons.environment import Cavity_Particle
 # In[2]:
 
 T = 293
-m_gas = ct.amu * (0.01 * 40 + 0.78 * 28 + 0.21 * 32)
-v_gas = np.sqrt(3 * ct.kb * T / m_gas)
 p = 1e-5
 R = 147e-9
 rho = 2200
-Nm = rho/(ct.amu*60.08) #SiO2 molecular density
-m_p = 4 / 3 * np.pi * R**3 * rho
-tweezer_wavelength = 1.55e-6
-tweezer_freq = 2 * np.pi * ct.c / tweezer_wavelength
 index_refraction = 1.4440
+tweezer_wavelength = 1.55e-6
 tweezer_power = 200e-3
 tweezer_waist = 0.6e-6
 cavity_waist = 100e-6
 cavity_length = 50e-3
 eta_detec = 0.178
-pol_permit_ratio = 3/Nm*(index_refraction**-1)/(index_refraction**2+2) #from C-M
 
+m_p = 4 / 3 * np.pi * R**3 * rho
+v_gas = np.sqrt(3 * ct.kb * T / ct.m_gas)
+Nm = rho/(ct.amu*60.08) #SiO2 molecular density
+tweezer_freq = 2 * np.pi * ct.c / tweezer_wavelength
+pol_permit_ratio = 3/Nm*(index_refraction**-1)/(index_refraction**2+2) #from C-M
 gamma = 15.8 * R**2 * p / (m_p * v_gas)
 omega = (
     np.sqrt(12 / np.pi)
@@ -58,7 +57,7 @@ g_cs = (
 g_fb = 1e6
 
 period = 2 * np.pi / omega
-t = np.arange(0, 100 * period, period / 3000)
+t = np.arange(0, 10 * period, period / 3000)
 N = t.shape[0]
 delta_t = np.diff(t)[0]
 
@@ -91,10 +90,8 @@ for i in range(t.shape[0]):
 
 # In[57]:
 
-
 variance_process = 2 * env.__gamma__ + np.power(env.backaction, 2)
 std_detection = 0.5
-
 
 # In[58]:
 
@@ -157,16 +154,16 @@ plt.legend(["Measured", "Estimated", "Simulated", "Control input"])
 plt.show()
 
 # In[62]:
-"""
+
 plt.figure()
 #fig2 = plt.Figure()
 plt.title('X quadrature')
-plt.plot(t[:], estimated_states[:,0])
-plt.plot(t[:], new_states[:,0])
+plt.plot(t[1:], estimated_states[1:,0])
+plt.plot(t[1:], new_states[1:,0])
 plt.grid()
 plt.legend(['Estimated','Simulated'])
 plt.show()
-"""
+
 
 # In[63]:
 fig2 = plt.Figure()
