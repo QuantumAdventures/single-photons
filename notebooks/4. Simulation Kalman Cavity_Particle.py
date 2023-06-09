@@ -5,7 +5,7 @@
 
 
 import numpy as np
-from control import dare
+from control import dare, lqr
 import scipy
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -30,19 +30,26 @@ eta_detec = 0.178
 
 m_p = 4 / 3 * np.pi * R**3 * rho
 v_gas = np.sqrt(3 * ct.kb * T / ct.m_gas)
-Nm = rho/(ct.amu*60.08) #SiO2 molecular density
+Nm = rho / (ct.amu * 60.08)  # SiO2 molecular density
 tweezer_freq = 2 * np.pi * ct.c / tweezer_wavelength
-pol_permit_ratio = 3/Nm*(index_refraction**-1)/(index_refraction**2+2) #from C-M
+pol_permit_ratio = (
+    3 / Nm * (index_refraction**-1) / (index_refraction**2 + 2)
+)  # from C-M
 gamma = 15.8 * R**2 * p / (m_p * v_gas)
 omega = (
     np.sqrt(12 / np.pi)
-    * np.sqrt((index_refraction - 1) / (index_refraction + 2)) ** 3
+    * np.sqrt((index_refraction**2 - 1) / (index_refraction**2 + 2)) ** 3
     * np.sqrt(tweezer_power)
     / (tweezer_waist**2 * np.sqrt(rho * ct.c))
 )
-coupling = 9*pol_permit_ratio**2*tweezer_power*tweezer_freq**5/\
-    (128*np.pi**2*ct.c**6*m_p*omega)
-#coupling = coupling/(ct.hbar/(2*m_p*omega))
+coupling = (
+    9
+    * pol_permit_ratio**2
+    * tweezer_power
+    * tweezer_freq**5
+    / (128 * np.pi**2 * ct.c**6 * m_p * omega)
+)
+# coupling = coupling/(ct.hbar/(2*m_p*omega))
 
 detuning = 1 * omega
 cavity_linewidth = omega
@@ -50,11 +57,10 @@ cavity_freq = detuning + tweezer_freq
 
 g_cs = (
     np.power(12 / np.pi, 1 / 4)
-    * np.power((index_refraction - 1) / (index_refraction + 2), 3 / 4)
+    * np.power((index_refraction**2 - 1) / (index_refraction**2 + 2), 3 / 4)
     * np.power(tweezer_power * R**6 * cavity_freq**6 / (ct.c**5 * rho), 1 / 4)
     / (np.sqrt(cavity_length) * cavity_waist)
 )
-g_fb = 1e6
 
 period = 2 * np.pi / omega
 t = np.arange(0, 10 * period, period / 3000)
@@ -110,12 +116,15 @@ R = np.array([[np.power(std_detection, 2)]])
 # In[59]:
 
 Ad = scipy.linalg.expm(env.A * delta_t)
-(omega_ss,L,G) = dare(Ad,env.B,Q,omega/g_fb**2)
+cost_states = np.array(
+    [[0.00001, 0, 0, 0], [0, 0.00001, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+)
+(G, S, E) = lqr(Ad, env.B * delta_t, cost_states, 1e5)
 
 # In[60]:
 
 x0 = 15
-P0 = 1*np.matrix(np.eye(4))
+P0 = 1 * np.matrix(np.eye(4))
 estimation = np.matrix([[0], [0], [x0], [0]])
 states = np.array([[0], [0], [x0], [0.0]])
 K = np.array([[0, 0, 1, 1e5]])
@@ -143,12 +152,12 @@ for i in tqdm(range(t.shape[0])):
 plt.close("all")
 fig1 = plt.Figure()
 plt.title("Position")
-plt.plot(t[1:], measured_states[1:], alpha = 0.95)
-plt.plot(t[1:], estimated_states[1:, 2], alpha = 0.95)
-plt.plot(t[1:], new_states[1:, 2],alpha = 0.95)
-C = max(controls)/4
-controls = [x/C for x in controls]
-plt.plot(t[1:], controls[1:], alpha = 0.5)
+plt.plot(t[1:], measured_states[1:], alpha=0.95)
+plt.plot(t[1:], estimated_states[1:, 2], alpha=0.95)
+plt.plot(t[1:], new_states[1:, 2], alpha=0.95)
+C = max(controls) / 4
+controls = [x / C for x in controls]
+plt.plot(t[1:], controls[1:], alpha=0.5)
 plt.grid()
 plt.legend(["Measured", "Estimated", "Simulated", "Control input"])
 plt.show()
@@ -156,12 +165,12 @@ plt.show()
 # In[62]:
 
 plt.figure()
-#fig2 = plt.Figure()
-plt.title('X quadrature')
-plt.plot(t[1:], estimated_states[1:,0])
-plt.plot(t[1:], new_states[1:,0])
+# fig2 = plt.Figure()
+plt.title("X quadrature")
+plt.plot(t[1:], estimated_states[1:, 0])
+plt.plot(t[1:], new_states[1:, 0])
 plt.grid()
-plt.legend(['Estimated','Simulated'])
+plt.legend(["Estimated", "Simulated"])
 plt.show()
 
 
@@ -169,7 +178,9 @@ plt.show()
 fig2 = plt.Figure()
 plt.figure()
 plt.title("Photon number")
-plt.plot(t[1:], np.power(estimated_states[1:, 0], 2) + np.power(estimated_states[1:, 1], 2))
+plt.plot(
+    t[1:], np.power(estimated_states[1:, 0], 2) + np.power(estimated_states[1:, 1], 2)
+)
 plt.plot(t[1:], np.power(new_states[1:, 0], 2) + np.power(new_states[1:, 1], 2))
 plt.grid()
 plt.legend(["Estimated", "Simulated"])
