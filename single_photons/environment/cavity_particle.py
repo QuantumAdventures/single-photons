@@ -11,6 +11,7 @@ class Cavity_Particle:
         kappa,
         g_cs,
         coupling,
+        optical_noise=0.001,
         eta_detection=1,
         radius=147e-9,
         rho=2200,
@@ -19,6 +20,7 @@ class Cavity_Particle:
         self.__gamma__ = gamma
         self.__detuning__ = detuning
         self.__kappa__ = kappa
+        self.__optical_noise__ = optical_noise
         self.__g_cs__ = g_cs
         self.A = np.array(
             [
@@ -55,7 +57,7 @@ class Cavity_Particle:
             np.sqrt(self.__kappa__)
             * delta_t
             * (
-                np.random.normal() / np.sqrt(delta_t)
+                self.__optical_noise__ * np.random.normal() / np.sqrt(delta_t)
                 + np.conjugate(alpha_in)
                 + alpha_in
             )
@@ -65,7 +67,7 @@ class Cavity_Particle:
             * np.sqrt(self.__kappa__)
             * delta_t
             * (
-                np.random.normal() / np.sqrt(delta_t)
+                self.__optical_noise__ * np.random.normal() / np.sqrt(delta_t)
                 + np.conjugate(alpha_in)
                 - alpha_in
             )

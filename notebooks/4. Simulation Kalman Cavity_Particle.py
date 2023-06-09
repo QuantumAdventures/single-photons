@@ -104,8 +104,8 @@ std_detection = 0.5
 
 Q = np.array(
     [
-        [cavity_linewidth, 0, 0, 0],
-        [0, cavity_linewidth, 0, 0],
+        [(env.__optical_noise__**2) * cavity_linewidth, 0, 0, 0],
+        [0, (env.__optical_noise__**2) * cavity_linewidth, 0, 0],
         [0, 0, 0, 0],
         [0, 0, 0, variance_process],
     ]
