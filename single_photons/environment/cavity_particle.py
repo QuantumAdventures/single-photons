@@ -36,8 +36,8 @@ class Cavity_Particle:
         self.backaction = np.sqrt(4 * np.pi * coupling)
         self.eta_det = eta_detection
         self._m_ = rho * 4 * np.pi * np.power(radius, 3) / 3
-        self.zp_x = np.sqrt(ct.hbar / (omega_p * self._m_))
-        self.zp_p = np.sqrt(omega_p * ct.hbar * self._m_)
+        self.zp_x = np.sqrt(ct.hbar / (2 * omega_p * self._m_))
+        self.zp_p = np.sqrt(omega_p * ct.hbar * self._m_ / 2)
 
     def __backaction_fluctuation__(self):
         return self.backaction * (
