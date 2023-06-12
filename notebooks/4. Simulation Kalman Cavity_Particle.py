@@ -7,6 +7,7 @@
 import numpy as np
 from control import dare, lqr
 import scipy
+import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from single_photons.estimators.kalman import KalmanFilter
@@ -33,7 +34,7 @@ v_gas = np.sqrt(3 * ct.kb * T / ct.m_gas)
 Nm = rho / (ct.amu * 60.08)  # SiO2 molecular density
 tweezer_freq = 2 * np.pi * ct.c / tweezer_wavelength
 pol_permit_ratio = (
-    3 / Nm * (index_refraction**-1) / (index_refraction**2 + 2)
+    3 / Nm * (index_refraction**2-1) / (index_refraction**2 + 2)
 )  # from C-M
 gamma = 15.8 * R**2 * p / (m_p * v_gas)
 omega = (
@@ -49,7 +50,7 @@ coupling = (
     * tweezer_freq**5
     / (128 * np.pi**2 * ct.c**6 * m_p * omega)
 )
-# coupling = coupling/(ct.hbar/(2*m_p*omega))
+coupling = coupling/(ct.hbar/(2*m_p*omega))
 
 detuning = 1 * omega
 cavity_linewidth = omega
@@ -61,6 +62,7 @@ g_cs = (
     * np.power(tweezer_power * R**6 * cavity_freq**6 / (ct.c**5 * rho), 1 / 4)
     / (np.sqrt(cavity_length) * cavity_waist)
 )
+g_cs = 0
 
 period = 2 * np.pi / omega
 t = np.arange(0, 10 * period, period / 3000)
@@ -82,7 +84,7 @@ env = Cavity_Particle(
     eta_detection=eta_detec,
 )
 
-pulse_amplitude = 900
+pulse_amplitude = 0
 pulse_center = 2500
 pulse_width = 200
 alpha_in = []
@@ -97,7 +99,7 @@ for i in range(t.shape[0]):
 # In[57]:
 
 variance_process = 2 * env.__gamma__ + np.power(env.backaction, 2)
-std_detection = 0.5
+std_detection = 1
 
 # In[58]:
 
@@ -132,6 +134,8 @@ new_states = np.zeros((N, 4))
 measured_states = np.zeros((N))
 estimated_states = np.zeros((N, 4))
 estimated_states[0, :] = estimation.reshape((4))
+estimate_Vx = []
+estimate_Vp = []
 estimation = estimation.reshape((4, 1))
 control = np.array([[0]])
 controls = []
@@ -141,6 +145,8 @@ for i in tqdm(range(t.shape[0])):
     measured_states[i] = states[2, 0] + std_detection * np.random.normal()
     kalman.propagate_dynamics(control)
     kalman.compute_aposteriori(measured_states[i])
+    estimate_Vx.append(float(kalman.error_covariance_aposteriori[i][2,2]))
+    estimate_Vp.append(float(kalman.error_covariance_aposteriori[i][3,3]))
     estimated_states[i, :] = kalman.estimates_aposteriori[i][:, 0].reshape((4))
     estimation = estimated_states[i, :].reshape((4, 1))
     control = -np.matmul(G, estimation)
@@ -150,7 +156,8 @@ for i in tqdm(range(t.shape[0])):
 
 # In[61]:
 plt.close("all")
-fig1 = plt.Figure()
+
+plt.figure()
 plt.title("Position")
 plt.plot(t[1:], measured_states[1:], alpha=0.95)
 plt.plot(t[1:], estimated_states[1:, 2], alpha=0.95)
@@ -165,7 +172,6 @@ plt.show()
 # In[62]:
 
 plt.figure()
-# fig2 = plt.Figure()
 plt.title("X quadrature")
 plt.plot(t[1:], estimated_states[1:, 0])
 plt.plot(t[1:], new_states[1:, 0])
@@ -175,7 +181,7 @@ plt.show()
 
 
 # In[63]:
-fig2 = plt.Figure()
+    
 plt.figure()
 plt.title("Photon number")
 plt.plot(
@@ -184,4 +190,20 @@ plt.plot(
 plt.plot(t[1:], np.power(new_states[1:, 0], 2) + np.power(new_states[1:, 1], 2))
 plt.grid()
 plt.legend(["Estimated", "Simulated"])
+plt.show()
+
+
+# In[64]:
+fig4,ax = plt.subplots()
+plt.title("Oscillator phase space")
+plt.plot(estimated_states[1:,2],estimated_states[1:,3])
+patches = []
+for i in tqdm(range(t.shape[0])[1:]):
+    radius = np.sqrt(estimate_Vx[i]) + np.sqrt(estimate_Vp[i])
+    circle = matplotlib.patches.Circle((estimated_states[i,2], estimated_states[i,3])\
+                                       ,radius)
+    patches.append(circle)
+coll = matplotlib.collections.PatchCollection(patches,facecolors = 'gray',alpha = 0.05)
+ax.add_collection(coll)
+plt.grid()
 plt.show()
