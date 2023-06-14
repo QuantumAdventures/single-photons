@@ -51,6 +51,7 @@ coupling = (
     / (128 * np.pi**2 * ct.c**6 * m_p * omega)
 )
 coupling = coupling / (ct.hbar / (2 * m_p * omega))
+coupling = 1000
 
 detuning = 1 * omega
 cavity_linewidth = omega
@@ -67,7 +68,7 @@ g_cs = 0
 period = 2 * np.pi / omega
 delta_t = 1e-9
 control_step = 10  # defined as int, number of time steps of simulation necessary to compute the control policy
-t = np.arange(0, 10 * period, delta_t)
+t = np.arange(0, 15 * period, delta_t)
 N = t.shape[0]
 
 # In[56]-2
@@ -121,7 +122,7 @@ Ad = scipy.linalg.expm(env.A * delta_t * control_step)
 cost_states = np.array(
     [[0.00001, 0, 0, 0], [0, 0.00001, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
 )
-(G, S, E) = lqr(Ad, env.B * delta_t * control_step, cost_states, 1e5)
+(G, S, E) = lqr(Ad, env.B * delta_t * control_step, cost_states, 1e4)
 
 # In[60]:
 
@@ -158,10 +159,14 @@ for i in tqdm(range(t.shape[0])):
             :, 0
         ].reshape((4))
         estimation = estimated_states[i, :].reshape((4, 1))
-        control = -np.matmul(G, estimation)
+        estimate_Vx.append(np.array(kalman.error_covariance_aposteriori[-1][2,2]))
+        estimate_Vp.append(np.array(kalman.error_covariance_aposteriori[-1][3,3]))
+        control = -0.15*np.matmul(G,estimation)
     else:
         measured_states[i] = measured_states[i - 1]
         estimated_states[i, :] = estimated_states[i - 1, :]
+        estimate_Vx.append(estimate_Vx[-1])
+        estimate_Vp.append(estimate_Vp[-1])
     controls.append(float(control))
     states = env.step(states, alpha_in=alpha_in[i], control=control, delta_t=delta_t)
 
@@ -205,6 +210,7 @@ plt.show()
 
 
 # In[64]:
+
 fig4, ax = plt.subplots()
 plt.title("Oscillator phase space")
 plt.plot(estimated_states[1:, 2], estimated_states[1:, 3])
