@@ -15,6 +15,7 @@ class Cavity_Particle:
         eta_detection=1,
         radius=147e-9,
         rho=2200,
+        T=292,
     ):
         self.__omega_p__ = omega_p
         self.__gamma__ = gamma
@@ -33,6 +34,7 @@ class Cavity_Particle:
         self.B = np.array([[0], [0], [0], [1]])
         self.C = np.array([[0, 0, 1, 0]])
         self.G = np.array([[0], [0], [0], [1]])
+        self.T = T
         self.backaction = np.sqrt(4 * np.pi * coupling)
         self.eta_det = eta_detection
         self._m_ = rho * 4 * np.pi * np.power(radius, 3) / 3
@@ -51,8 +53,12 @@ class Cavity_Particle:
                 "States size for this specific system is equal to four \
                 (two optical quadratures, position and velocity)"
             )
-        backaction_force = self.__backaction_fluctuation__()
-        thermal_force = np.sqrt(2 * self.__gamma__) * np.random.normal()
+        backaction_force = self.__backaction_fluctuation__() / self.zp_p
+        thermal_force = (
+            np.sqrt(4 * ct.kb * self.T * self.__gamma__ * self._m_) * np.random.normal()
+        ) / self.zp_p
+        #        print(thermal_force)
+        #        print(backaction_force)
         x_in = (
             np.sqrt(self.__kappa__)
             * delta_t

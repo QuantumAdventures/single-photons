@@ -18,7 +18,7 @@ from single_photons.environment import Cavity_Particle
 # In[2]:
 
 T = 293
-p = 1e-5
+p = 1e-6
 R = 147e-9
 rho = 2200
 index_refraction = 1.4440
@@ -50,8 +50,8 @@ coupling = (
     * tweezer_freq**5
     / (128 * np.pi**2 * ct.c**6 * m_p * omega)
 )
-coupling = coupling / (ct.hbar / (2 * m_p * omega))
-coupling = 1000
+# coupling = coupling / (ct.hbar / (2 * m_p * omega))
+coupling = 6.68e-42
 
 detuning = 1 * omega
 cavity_linewidth = omega
@@ -67,8 +67,8 @@ g_cs = 0
 
 period = 2 * np.pi / omega
 delta_t = 1e-9
-control_step = 10  # defined as int, number of time steps of simulation necessary to compute the control policy
-t = np.arange(0, 15 * period, delta_t)
+control_step = 30  # defined as int, number of time steps of simulation necessary to compute the control policy
+t = np.arange(0, 50 * period, delta_t)
 N = t.shape[0]
 
 # In[56]-2
@@ -83,6 +83,7 @@ env = Cavity_Particle(
     radius=R,
     rho=rho,
     eta_detection=eta_detec,
+    T=T,
 )
 
 pulse_amplitude = 0
@@ -98,9 +99,9 @@ for i in range(t.shape[0]):
     alpha_in.append(alpha)
 
 # In[57]:
-
-variance_process = 2 * env.__gamma__ + np.power(env.backaction, 2)
-std_detection = 1
+variance_process = 4 * ct.kb * env.T * env.__gamma__ * env._m_ / (env.zp_p**2)
+variance_process = variance_process + np.power(env.backaction / env.zp_p, 2)
+std_detection = 1.3
 
 # In[58]:
 
@@ -118,19 +119,18 @@ R = np.array([[np.power(std_detection, 2)]])
 
 # In[59]:
 
-Ad = scipy.linalg.expm(env.A * delta_t * control_step)
+Ad = scipy.linalg.expm(env.A * control_step * delta_t)
 cost_states = np.array(
-    [[0.00001, 0, 0, 0], [0, 0.00001, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+    [[1e-5, 0, 0, 0], [0, 1e-5, 0, 0], [0, 0, omega / 1e5, 0], [0, 0, 0, omega / 1e3]]
 )
-(G, S, E) = lqr(Ad, env.B * delta_t * control_step, cost_states, 1e4)
-
+(G, S, E) = lqr(Ad, env.B * delta_t * control_step, cost_states, omega)
+print(G, omega, Ad)
 # In[60]:
 
 x0 = 15
 P0 = 1 * np.matrix(np.eye(4))
 estimation = np.matrix([[0], [0], [x0], [0]])
 states = np.array([[0], [0], [x0], [0.0]])
-K = np.array([[0, 0, 1, 1e5]])
 new_states = np.zeros((N, 4))
 measured_states = np.zeros((N))
 estimated_states = np.zeros((N, 4))
@@ -159,9 +159,9 @@ for i in tqdm(range(t.shape[0])):
             :, 0
         ].reshape((4))
         estimation = estimated_states[i, :].reshape((4, 1))
-        estimate_Vx.append(np.array(kalman.error_covariance_aposteriori[-1][2,2]))
-        estimate_Vp.append(np.array(kalman.error_covariance_aposteriori[-1][3,3]))
-        control = -0.15*np.matmul(G,estimation)
+        estimate_Vx.append(np.array(kalman.error_covariance_aposteriori[-1][2, 2]))
+        estimate_Vp.append(np.array(kalman.error_covariance_aposteriori[-1][3, 3]))
+        control = -0.5 * np.matmul(G, estimation)
     else:
         measured_states[i] = measured_states[i - 1]
         estimated_states[i, :] = estimated_states[i - 1, :]
@@ -173,7 +173,7 @@ for i in tqdm(range(t.shape[0])):
 # In[61]:
 plt.close("all")
 
-plt.figure()
+plt.figure(1)
 plt.title("Position")
 plt.plot(t[1:], measured_states[1:], alpha=0.95)
 plt.plot(t[1:], estimated_states[1:, 2], alpha=0.95)
@@ -183,22 +183,22 @@ controls = [x / C for x in controls]
 plt.plot(t[1:], controls[1:], alpha=0.5)
 plt.grid()
 plt.legend(["Measured", "Estimated", "Simulated", "Control input"])
-plt.show()
+# plt.show()
 
 # In[62]:
 
-plt.figure()
+plt.figure(2)
 plt.title("X quadrature")
 plt.plot(t[1:], estimated_states[1:, 0])
 plt.plot(t[1:], new_states[1:, 0])
 plt.grid()
 plt.legend(["Estimated", "Simulated"])
-plt.show()
+# plt.show()
 
 
 # In[63]:
 
-plt.figure()
+plt.figure(3)
 plt.title("Photon number")
 plt.plot(
     t[1:], np.power(estimated_states[1:, 0], 2) + np.power(estimated_states[1:, 1], 2)
@@ -206,7 +206,7 @@ plt.plot(
 plt.plot(t[1:], np.power(new_states[1:, 0], 2) + np.power(new_states[1:, 1], 2))
 plt.grid()
 plt.legend(["Estimated", "Simulated"])
-plt.show()
+# plt.show()
 
 
 # In[64]:
