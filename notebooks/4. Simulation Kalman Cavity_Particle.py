@@ -43,14 +43,14 @@ omega = (
     * np.sqrt(tweezer_power)
     / (tweezer_waist**2 * np.sqrt(rho * ct.c))
 )
-coupling = (
-    9
-    * pol_permit_ratio**2
-    * tweezer_power
-    * tweezer_freq**5
-    / (128 * np.pi**2 * ct.c**6 * m_p * omega)
-)
-# coupling = coupling / (ct.hbar / (2 * m_p * omega))
+
+#coupling = (
+#    9
+#    * pol_permit_ratio**2
+#    * tweezer_power
+#    * tweezer_freq**5
+#    / (128 * np.pi**2 * ct.c**6 * m_p * omega)
+#)
 coupling = 6.68e-42
 
 detuning = 1 * omega
@@ -68,7 +68,7 @@ g_cs = 0
 period = 2 * np.pi / omega
 delta_t = 1e-9
 control_step = 30  # defined as int, number of time steps of simulation necessary to compute the control policy
-t = np.arange(0, 50 * period, delta_t)
+t = np.arange(0, 20 * period, delta_t)
 N = t.shape[0]
 
 # In[56]-2
@@ -121,14 +121,14 @@ R = np.array([[np.power(std_detection, 2)]])
 
 Ad = scipy.linalg.expm(env.A * control_step * delta_t)
 cost_states = np.array(
-    [[1e-5, 0, 0, 0], [0, 1e-5, 0, 0], [0, 0, omega / 1e5, 0], [0, 0, 0, omega / 1e3]]
+    [[1e-5, 0, 0, 0], [0, 1e-5, 0, 0], [0, 0, omega/2, 0], [0, 0, 0, omega/2]]
 )
-(G, S, E) = lqr(Ad, env.B * delta_t * control_step, cost_states, omega)
+(G, S, E) = lqr(Ad, env.B * delta_t * control_step, cost_states, 100000)
 print(G, omega, Ad)
 # In[60]:
 
 x0 = 15
-P0 = 1 * np.matrix(np.eye(4))
+P0 = std_detection * np.matrix(np.eye(4))
 estimation = np.matrix([[0], [0], [x0], [0]])
 states = np.array([[0], [0], [x0], [0.0]])
 new_states = np.zeros((N, 4))
@@ -137,6 +137,7 @@ estimated_states = np.zeros((N, 4))
 estimated_states[0, :] = estimation.reshape((4))
 estimate_Vx = []
 estimate_Vp = []
+estimate_Cov = []
 estimation = estimation.reshape((4, 1))
 control = np.array([[0]])
 controls = []
@@ -161,12 +162,14 @@ for i in tqdm(range(t.shape[0])):
         estimation = estimated_states[i, :].reshape((4, 1))
         estimate_Vx.append(np.array(kalman.error_covariance_aposteriori[-1][2, 2]))
         estimate_Vp.append(np.array(kalman.error_covariance_aposteriori[-1][3, 3]))
-        control = -0.5 * np.matmul(G, estimation)
+        estimate_Cov.append(np.array(kalman.error_covariance_aposteriori[-1][2, 3]))
+        control = -3e5/max(abs(G[0])) * np.matmul(G, estimation)
     else:
         measured_states[i] = measured_states[i - 1]
         estimated_states[i, :] = estimated_states[i - 1, :]
         estimate_Vx.append(estimate_Vx[-1])
         estimate_Vp.append(estimate_Vp[-1])
+        estimate_Cov.append(estimate_Cov[-1])
     controls.append(float(control))
     states = env.step(states, alpha_in=alpha_in[i], control=control, delta_t=delta_t)
 
@@ -213,15 +216,25 @@ plt.legend(["Estimated", "Simulated"])
 
 fig4, ax = plt.subplots()
 plt.title("Oscillator phase space")
-plt.plot(estimated_states[1:, 2], estimated_states[1:, 3])
+plt.plot(estimated_states[1::control_step, 2], estimated_states[1::control_step, 3])
 patches = []
-for i in tqdm(range(t.shape[0])[1:]):
-    radius = np.sqrt(estimate_Vx[i]) + np.sqrt(estimate_Vp[i])
-    circle = matplotlib.patches.Circle(
+i = 0
+while i < t.shape[0]:
+    width = np.sqrt(estimate_Vx[i])
+    height = np.sqrt(estimate_Vp[i])
+    radius = width + height
+    ellipse = matplotlib.patches.Circle(
         (estimated_states[i, 2], estimated_states[i, 3]), radius
     )
-    patches.append(circle)
+    patches.append(ellipse)
+    i += control_step
 coll = matplotlib.collections.PatchCollection(patches, facecolors="gray", alpha=0.05)
 ax.add_collection(coll)
 plt.grid()
 plt.show()
+
+# In[65]:
+plt.figure(5)
+plt.title("Uncertainty")
+unc = [x*y-z**2 for x,y,z in zip(estimate_Vx,estimate_Vp,estimate_Cov)]
+plt.plot(t,unc)
