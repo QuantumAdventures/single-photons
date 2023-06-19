@@ -56,12 +56,8 @@ class Cavity_Particle:
                 "States size for this specific system is equal to four \
                 (two optical quadratures, position and velocity)"
             )
-        backaction_force = self.__backaction_fluctuation__() / self.zp_p
-        thermal_force = (
-            np.sqrt(4 * ct.kb * self.T * self.__gamma__ * self._m_) * np.random.normal()
-        ) / self.zp_p
-        #        print(thermal_force)
-        #        print(backaction_force)
+        backaction_force = self.__backaction_fluctuation__()
+        thermal_force = self.thermal_force_std* np.random.normal()
         x_in = (
             np.sqrt(self.__kappa__)
             * delta_t
@@ -86,7 +82,7 @@ class Cavity_Particle:
         states = (
             states
             + state_dot * delta_t
-            + self.G * np.sqrt(delta_t) * (thermal_force + backaction_force)
+            + self.G * np.sqrt(delta_t) * (thermal_force - backaction_force)
             + optical_input
         )
         return states

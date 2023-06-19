@@ -19,7 +19,7 @@ class Particle:
         self.zp_x = np.sqrt(ct.hbar / (2 * omega * self._m_))
         self.zp_p = np.sqrt(omega * ct.hbar * self._m_ / 2)
         self.nl = ct.hbar*self.__omega__/(ct.kb*self.T)
-        self.C = np.array([[16*np.pi*coupling*eta_detection, 0]])/self.x_zp
+        self.C = np.array([[1, 0]])
         self.thermal_force_std = np.sqrt(4 * self.__gamma__ * self._m_ * ct.kb * T)/self.zp_p
         self.backaction_std = self.backaction/ self.zp_p
 
