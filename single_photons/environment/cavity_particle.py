@@ -40,9 +40,12 @@ class Cavity_Particle:
         self._m_ = rho * 4 * np.pi * np.power(radius, 3) / 3
         self.zp_x = np.sqrt(ct.hbar / (2 * omega_p * self._m_))
         self.zp_p = np.sqrt(omega_p * ct.hbar * self._m_ / 2)
+        self.thermal_force_std = np.sqrt(4 * self.__gamma__ * self._m_ * ct.kb * T)/self.zp_p
+        self.backaction_std = self.backaction/ self.zp_p
+
 
     def __backaction_fluctuation__(self):
-        return self.backaction * (
+        return self.backaction_std * (
             np.sqrt(self.eta_det) * np.random.normal()
             + np.sqrt(1 - self.eta_det) * np.random.normal()
         )
