@@ -1,18 +1,17 @@
+import os
 import numpy as np
+
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 from tqdm import tqdm
-import scipy
 from control import dare
+import scipy
 from single_photons.estimators.kalman import KalmanFilter
-import single_photons.utils.constants as ct
 from single_photons.utils.parameters import *
 from single_photons.environment import Particle
 
 
 def discrete_integration(env, Ad, Bd, Q, R, G, t, std_detection, N):
-    x0 = 0
+    x0 = 10
     P0 = 3e8*np.matrix(np.eye(2))
     estimation = np.matrix([[x0*np.random.normal()], [x0*np.random.normal()]])
     states = np.array([[x0*np.random.normal()], [x0*np.random.normal()]])
@@ -42,7 +41,7 @@ def discrete_integration(env, Ad, Bd, Q, R, G, t, std_detection, N):
 
 
 def run_simulation(power, wavelength, waist, radius, pressure,
-                   fs, eta_detection, control_step, delta_t):
+                   fs, eta_detection, control_step, delta_t, g_fb):
     gamma, omega, ba_force, std_detection, std_z = compute_parameters_simulation(power, wavelength, waist, 
                                                                       radius, pressure, fs, eta_detection)  
     period = 2*np.pi/omega
@@ -54,7 +53,7 @@ def run_simulation(power, wavelength, waist, radius, pressure,
     std_detection = std_detection/env.zp_x
     Q = np.array([[0, 0], [0, variance_process]])*control_step*delta_t/2
     R = np.array([[np.power(std_detection,2)]])
-    g_fb = 2*omega
+    g_fb = g_fb*omega
     Ad = scipy.linalg.expm(env.A *control_step*delta_t)
     Bd = env.B * delta_t * control_step
     cost_states = np.array([[omega/2, 0],
@@ -63,7 +62,21 @@ def run_simulation(power, wavelength, waist, radius, pressure,
     sim_states, measure_states, est_states, kalman, control = discrete_integration(env, Ad, Bd, 
                                                                                    Q, R, G, t, 
                                                                                    std_detection, N)
-    
+    phonons = compute_phonons(est_states[::control_step], kalman.error_covariance_aposteriori, step=100)
+    save_csv(phonons[-50:].mean(), g_fb, G, eta_detection)
+
+
+def save_csv(mean_phonons, g_fb, G, eta_detection, root_path='data'):
+    df = pd.DataFrame({'avg_phonons': [mean_phonons],
+                       'g_fb': [g_fb],
+                       'G_z': [G[0,0]],
+                       'G_p': [G[0,1]],
+                       'eta': [eta_detection]})
+    if os.path.isfile('{}/phonons_per_gain.csv'.format(root_path)):
+        df.to_csv('{}/phonons_per_gain.csv'.format(root_path), index=False, mode='a', header=False)
+    else:
+        df.to_csv('{}/phonons_per_gain.csv'.format(root_path), index=False, mode='w')
+
 
 if __name__=='__main__':
     p = 0
@@ -71,7 +84,15 @@ if __name__=='__main__':
     wavelength = 1.064e-6
     power = 300e-3
     waist = 0.6e-6
-    eta_detection = 1
+    etas = [0.3, 1]
     delta_t = 1e-9
     control_step = 30 
     fs = 1/(control_step*delta_t)
+    g_fbs = np.linspace(0.1, 2, 20)
+    for i in range(5):
+        for eta_detection in etas:
+            for g_fb in g_fbs:
+                run_simulation(power, wavelength, 
+                               waist, radius, p, 
+                               fs, eta_detection, control_step, 
+                               delta_t, g_fb)
