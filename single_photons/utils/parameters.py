@@ -64,7 +64,7 @@ def compute_parameters_simulation_cavity(power, wavelength, tweezer_waist, radiu
     std_detection = std_z*np.sqrt(fs/(2*eta_detection))
     detuning = omega*detuning_ratio
     cavity_linewidth = omega*cavity_linewidth_ratio
-    cavity_freq = detuning + omega
+    cavity_freq = detuning + 2*np.pi*c/wavelength
     g_cs = (
     np.power(12 / np.pi, 1 / 4)
     * np.power((index_refraction**2 - 1) / (index_refraction**2 + 2), 3 / 4)
