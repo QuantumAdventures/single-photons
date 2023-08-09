@@ -28,18 +28,23 @@ class KalmanFilter:
          
     def propagate_dynamics(self,inputValue):
          
-        xk_minus=self.A*self.estimates_aposteriori[self.t_i]+self.B*inputValue
-        Pk_minus=self.A*self.error_covariance_aposteriori[self.t_i]*(self.A.T)+self.Q
+        xk_minus = np.matmul(self.A,self.estimates_aposteriori[self.t_i]) + self.B*inputValue
+        Pk_minus = np.matmul(self.A,np.matmul(self.error_covariance_aposteriori[self.t_i],(self.A.T))) + self.Q
         self.estimates_apriori.append(xk_minus)
         self.error_covariance_apriori.append(Pk_minus)         
         self.t_i=self.t_i+1
      
     def compute_aposteriori(self,currentMeasurement):
-        Kk=self.error_covariance_apriori[self.t_i-1]*(self.C.T)*np.linalg.pinv(self.R+self.C*self.error_covariance_apriori[self.t_i-1]*(self.C.T))
-        error_k=currentMeasurement-self.C*self.estimates_apriori[self.t_i-1]
-        xk_plus=self.estimates_apriori[self.t_i-1]+Kk*error_k
-        IminusKkC=np.matrix(np.eye(self.x0.shape[0]))-Kk*self.C
-        Pk_plus=IminusKkC*self.error_covariance_apriori[self.t_i-1]*(IminusKkC.T)+Kk*(self.R)*(Kk.T)
+        Kk = np.matmul(self.error_covariance_apriori[self.t_i-1],\
+                       np.matmul(self.C.T,\
+                                 np.linalg.pinv(self.R + np.matmul(self.C,\
+                                                                   np.matmul(self.error_covariance_apriori[self.t_i-1],(self.C.T))))))
+        error_k = currentMeasurement - np.matmul(self.C,self.estimates_apriori[self.t_i-1])
+        xk_plus = self.estimates_apriori[self.t_i-1] + np.matmul(Kk,error_k)
+        IminusKkC = np.array(np.eye(self.x0.shape[0])) - np.matmul(Kk,self.C)
+        Pk_plus = np.matmul(IminusKkC,\
+                            np.matmul(self.error_covariance_apriori[self.t_i-1],(IminusKkC.T))) +\
+            np.matmul(Kk,np.matmul(self.R,Kk.T))
         self.gainMatrices.append(Kk)
         self.errors.append(error_k)
         self.estimates_aposteriori.append(xk_plus)

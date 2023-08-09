@@ -1,4 +1,5 @@
 import numpy as np
+from control import lqr
 import single_photons.utils.constants as ct
 
 
@@ -16,6 +17,7 @@ class Cavity_Particle:
         radius=147e-9,
         rho=2200,
         T=292,
+        g_fb_ratio = 5
     ):
         self.__omega_p__ = omega_p
         self.__gamma__ = gamma
@@ -42,6 +44,13 @@ class Cavity_Particle:
         self.zp_p = np.sqrt(omega_p * ct.hbar * self._m_ / 2)
         self.thermal_force_std = np.sqrt(4 * self.__gamma__ * self._m_ * ct.kb * T)/self.zp_p
         self.backaction_std = self.backaction/ self.zp_p
+        self.cost_states = np.array([[self.__omega_p__/2, 0, 0, 0],
+                        [0, self.__omega_p__/2, 0, 0],
+                        [0, 0, self.__omega_p__/2, 0],
+                        [0, 0, 0, self.__omega_p__/2]
+                       ])
+        self.g_fb = g_fb_ratio*self.__omega_p__
+        self.G_lqr = lqr(self.A, self.B, self.cost_states, self.__omega_p__/(self.g_fb)**2)[0]
 
 
     def __backaction_fluctuation__(self):
