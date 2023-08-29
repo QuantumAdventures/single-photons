@@ -116,7 +116,6 @@ def compute_parameters_simulation_cavity(
         pressure,
         rho=rho,
         T=T,
-        index_refraction=index_refraction,
     )
     omega = compute_omega(
         power,

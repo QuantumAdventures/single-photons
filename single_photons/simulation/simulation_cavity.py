@@ -3,24 +3,26 @@ from numba import njit
 from numba.pycc import CC
 
 
-cc_p = CC("simulation_particle")
-cc_p._source_module = "single_photons.simulation.simulation_particle"
+cc_c = CC("simulation_cavity")
+cc_c._source_module = "single_photons.simulation.simulation_cavity"
 
 
 @njit(nopython=True, cache=True)
-@cc_p.export(
-    "simulation_p",
-    "Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:,:], f8[:]))\
-       (f8[:,:], f8[:,:], f8, f8, f8, f8, f8, f8, f8[:,:], f8[:,:], \
+@cc_c.export(
+    "simulation_c",
+    "Tuple((f8[:,:], f8[:,:], f8[:,:], f8[:,:,:]))\
+       (f8[:,:], f8[:,:], f8, f8, f8[:], f8, f8, f8, f8, f8, f8[:,:], f8[:,:], \
        f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, i8, i8)",
 )
-def simulation_p(
+def simulation_c(
     A,
     B,
+    kappa,
+    optical_noise,
+    alpha_in,
     thermal_std,
     backaction_std,
     detect_std,
-    eta_det,
     x0,
     P0,
     Ad,
@@ -100,15 +102,35 @@ def simulation_p(
         else:
             measured_states[k] = measured_states[k - 1]
             estimated_states[k, :] = estimated_states[k - 1, :]
-        state_dot = A @ current_states + B * control
-        backaction_term = backaction_std * (
-            np.sqrt(eta_det) * np.random.normal()
-            + np.sqrt(1 - eta_det) * np.random.normal()
+        x_in = (
+            np.sqrt(kappa)
+            * dt
+            * (
+                optical_noise * np.random.normal() / np.sqrt(dt)
+                + np.conjugate(alpha_in)
+                + alpha_in
+            )
         )
+        y_in = (
+            1j
+            * np.sqrt(kappa)
+            * dt
+            * (
+                optical_noise * np.random.normal() / np.sqrt(dt)
+                + np.conjugate(alpha_in)
+                - alpha_in
+            )
+        )
+        optical_input = np.array([[x_in], [y_in], [0], [0]])
+        state_dot = A @ current_states + B * control
+
         current_states = (
             current_states
             + state_dot * dt
-            + G * np.sqrt(dt) * (backaction_term + thermal_std * np.random.normal())
+            + G
+            * np.sqrt(dt)
+            * (backaction_std * np.random.normal() + thermal_std * np.random.normal())
+            + optical_input
         )
         controls[k] = control[0, 0]
         state[k, 1] = current_states[1, 0]
@@ -117,7 +139,7 @@ def simulation_p(
 
 
 @njit(nopython=True, cache=True)
-@cc_p.export(
+@cc_c.export(
     "propagate_dynamics",
     "Tuple((f8[:,:,:], f8[:,:,:], f8[:,:,:], f8[:,:,:], i8))(f8[:,:], \
        f8[:,:], f8[:,:], f8[:,:,:],f8[:,:,:],f8[:,:,:],f8[:,:,:], \
@@ -143,7 +165,7 @@ def propagate_dynamics(
 
 
 @njit(nopython=True, cache=True)
-@cc_p.export(
+@cc_c.export(
     "compute_aposteriori",
     "Tuple((f8[:,:,:], f8[:,:,:], f8[:,:,:], f8[:,:,:]))(f8[:,:], \
        f8[:,:], f8[:,:], f8[:,:], f8[:,:,:], f8[:,:,:], f8[:,:,:],\
@@ -177,4 +199,4 @@ def compute_aposteriori(
 
 
 if __name__ == "__main__":
-    cc_p.compile()
+    cc_c.compile()
