@@ -4,9 +4,9 @@ from single_photons.simulation.simulation_particle import (
     cc_p,
 )
 
-# from single_photons.simulation.simulation_cavity import (
-#    cc_c,
-# )
+from single_photons.simulation.simulation_cavity import (
+    cc_c,
+)
 
 
 with open("README.md", "r") as fh:
@@ -41,5 +41,5 @@ setup(
         "matplotlib",
         "seaborn",
     ],
-    ext_modules=[cc_p.distutils_extension()],  # , cc_c.distutils_extension()],
+    ext_modules=[cc_p.distutils_extension(), cc_c.distutils_extension()],
 )

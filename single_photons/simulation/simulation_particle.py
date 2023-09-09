@@ -111,8 +111,7 @@ def simulation_p(
             + G * np.sqrt(dt) * (backaction_term + thermal_std * np.random.normal())
         )
         controls[k] = control[0, 0]
-        state[k, 1] = current_states[1, 0]
-        state[k, 0] = current_states[0, 0]
+        state[k, :] = current_states[:, 0]
     return state, measured_states, estimated_states, cov_aposteriori, controls
 
 
