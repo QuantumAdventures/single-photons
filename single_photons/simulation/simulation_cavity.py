@@ -4,7 +4,7 @@ from numba import njit, jit
 from numba.pycc import CC
 
 
-cc_c = CC("simulation_cavity")
+"""cc_c = CC("simulation_cavity")
 cc_c._source_module = "single_photons.simulation.simulation_cavity"
 
 
@@ -15,6 +15,10 @@ cc_c._source_module = "single_photons.simulation.simulation_cavity"
        (f8[:,:], f8[:,:], c16[:,:], f8, f8, f8, f8, f8, f8, f8[:,:], f8[:,:], \
        f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, i8, i8)",
 )
+"""
+
+
+@jit(nopython=True)
 def simulation_c(
     A,
     B,
@@ -136,6 +140,7 @@ def simulation_c(
     return state, measured_states, estimated_states, cov_aposteriori, controls
 
 
+"""
 @njit(nopython=True, cache=True)
 @cc_c.export(
     "propagate_dynamics",
@@ -143,6 +148,10 @@ def simulation_c(
       c16[:,:], c16[:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:], \
           c16[:,:], i8)",
 )
+"""
+
+
+@jit(nopython=True)
 def propagate_dynamics(
     Ad,
     Bd,
@@ -162,13 +171,17 @@ def propagate_dynamics(
     return e_aposteriori, e_apriori, cov_aposteriori, cov_apriori, time_step
 
 
-@njit(nopython=True, cache=True)
+"""@njit(nopython=True, cache=True)
 @cc_c.export(
     "compute_aposteriori",
     "Tuple((c16[:,:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:]))(c16[:,:], \
       c16[:,:], c16[:,:], c16[:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:],\
             c16[:,:,:], c16[:,:,:], c16[:,:,:], i8)",
 )
+"""
+
+
+@jit(nopython=True)
 def compute_aposteriori(
     measurement,
     C,
@@ -196,5 +209,5 @@ def compute_aposteriori(
     return e_aposteriori, cov_aposteriori, kalman_errors, kalman_gain_matrices
 
 
-if __name__ == "__main__":
-    cc_c.compile()
+# if __name__ == "__main__":
+#    cc_c.compile()
