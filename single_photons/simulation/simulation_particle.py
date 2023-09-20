@@ -1,12 +1,12 @@
 import numpy as np
-from numba import njit
+from numba import njit, jit
 from numba.pycc import CC
 
 
-cc_p = CC("simulation_particle")
-cc_p._source_module = "single_photons.simulation.simulation_particle"
+# cc_p = CC("simulation_particle")
+# cc_p._source_module = "single_photons.simulation.simulation_particle"
 
-
+"""
 @njit(nopython=True, cache=True)
 @cc_p.export(
     "simulation_p",
@@ -14,6 +14,10 @@ cc_p._source_module = "single_photons.simulation.simulation_particle"
        (f8[:,:], f8[:,:], f8, f8, f8, f8, f8, f8, f8[:,:], f8[:,:], \
        f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, i8, i8)",
 )
+"""
+
+
+@jit(nopython=True)
 def simulation_p(
     A,
     B,
@@ -115,13 +119,17 @@ def simulation_p(
     return state, measured_states, estimated_states, cov_aposteriori, controls
 
 
+"""
 @njit(nopython=True, cache=True)
 @cc_p.export(
     "propagate_dynamics",
     "Tuple((f8[:,:,:], f8[:,:,:], f8[:,:,:], f8[:,:,:], i8))(f8[:,:], \
        f8[:,:], f8[:,:], f8[:,:,:],f8[:,:,:],f8[:,:,:],f8[:,:,:], \
            f8[:,:], i8)",
-)
+)"""
+
+
+@jit(nopython=True)
 def propagate_dynamics(
     Ad,
     Bd,
@@ -141,6 +149,7 @@ def propagate_dynamics(
     return e_aposteriori, e_apriori, cov_aposteriori, cov_apriori, time_step
 
 
+"""
 @njit(nopython=True, cache=True)
 @cc_p.export(
     "compute_aposteriori",
@@ -148,6 +157,10 @@ def propagate_dynamics(
        f8[:,:], f8[:,:], f8[:,:], f8[:,:,:], f8[:,:,:], f8[:,:,:],\
              f8[:,:,:], f8[:,:,:], f8[:,:,:], i8)",
 )
+"""
+
+
+@jit(nopython=True)
 def compute_aposteriori(
     measurement,
     C,
@@ -175,5 +188,5 @@ def compute_aposteriori(
     return e_aposteriori, cov_aposteriori, kalman_errors, kalman_gain_matrices
 
 
-if __name__ == "__main__":
-    cc_p.compile()
+# if __name__ == "__main__":
+#    cc_p.compile()
