@@ -1,6 +1,10 @@
 import numpy as np
 from .constants import kb, hbar, c, amu, m_gas
 
+def compute_zpx(omega, radius, rho = 2200):
+    m_p = rho * (4 / 3) * np.pi * np.power(radius,3)
+    zp_x = np.sqrt(hbar / (2*m_p*omega))
+    return zp_x
 
 def compute_gamma(radius, pressure, rho=2200, T=293):
     m_p = rho * 4 * np.pi * np.power(radius, 3) / 3
