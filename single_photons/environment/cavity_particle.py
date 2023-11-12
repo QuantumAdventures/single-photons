@@ -12,7 +12,6 @@ class Cavity_Particle:
         kappa,
         g_cs,
         coupling,
-        optical_noise=0,
         eta_detection=1,
         radius=147e-9,
         rho=2200,
@@ -23,8 +22,8 @@ class Cavity_Particle:
         self.__gamma__ = gamma
         self.__detuning__ = detuning
         self.__kappa__ = kappa
-        self.__optical_noise__ = optical_noise
         self.__g_cs__ = g_cs
+        self.__shot_std__ = np.sqrt(self.__kappa__/2)
         self.A = np.array(
             [
                 [-self.__kappa__ / 2, self.__detuning__, 0, 0],
@@ -77,7 +76,6 @@ class Cavity_Particle:
             np.sqrt(self.__kappa__)
             * delta_t
             * (
-                self.__optical_noise__ * np.random.normal() / np.sqrt(delta_t)
                 + np.conjugate(alpha_in)
                 + alpha_in
             )
@@ -87,17 +85,22 @@ class Cavity_Particle:
             * np.sqrt(self.__kappa__)
             * delta_t
             * (
-                self.__optical_noise__ * np.random.normal() / np.sqrt(delta_t)
                 + np.conjugate(alpha_in)
                 - alpha_in
             )
         )
+        optical_noise = np.array([
+            [self.__shot_std__*np.random.normal()],
+            [self.__shot_std__*np.random.normal()],
+            [0],
+            [0]
+        ])
         optical_input = np.array([[x_in], [y_in], [0], [0]])
         state_dot = np.matmul(self.A, states) + self.B * control
         states = (
             states
             + state_dot * delta_t
             + self.G * np.sqrt(delta_t) * (thermal_force - backaction_force)
-            + optical_input
+            + optical_input+np.sqrt(delta_t)*optical_noise
         )
         return states

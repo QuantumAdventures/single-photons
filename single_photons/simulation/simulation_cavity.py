@@ -4,18 +4,6 @@ from numba import njit, jit
 from numba.pycc import CC
 
 
-"""cc_c = CC("simulation_cavity")
-cc_c._source_module = "single_photons.simulation.simulation_cavity"
-
-
-@njit(nopython=True, cache=True)
-@cc_c.export(
-    "simulation_c",
-    "Tuple((c16[:,:], c16[:,:], c16[:,:], c16[:,:,:], c16[:]))\
-       (f8[:,:], f8[:,:], c16[:,:], f8, f8, f8, f8, f8, f8, f8[:,:], f8[:,:], \
-       f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8[:,:], f8, i8, i8)",
-)
-"""
 
 
 @jit(nopython=True)
@@ -25,6 +13,7 @@ def simulation_c(
     optical_input,
     thermal_std,
     backaction_std,
+    shot_std,
     detect_std,
     eta_det,
     x0,
@@ -79,6 +68,8 @@ def simulation_c(
     ).astype(np.complex_)
     estimated_states[0, :] = estimation[:, 0]
     control = np.zeros((1, 1)).astype(np.complex_)
+    optical_noise = np.sqrt(dt)*np.random.normal(loc=0.0, scale=shot_std, size=(N_time, 4, 1)).astype(np.complex_)
+    optical_noise[:, 2:] = 0
     kalman_time_step = 0
     for k in range(N_time):
         if not k % control_step:
@@ -129,26 +120,25 @@ def simulation_c(
             np.sqrt(eta_det) * np.random.normal()
             + np.sqrt(1 - eta_det) * np.random.normal()
         )
+#        optical_noise = np.array([
+#            [shot_std*np.random.normal()],
+#            [shot_std*np.random.normal()],
+#            [0],
+#            [0]
+#        ]).astype(np.complex_)
+
         current_states = (
             current_states
             + state_dot * dt
             + G * np.sqrt(dt) * (backaction_term + thermal_std * np.random.normal())
-            + optical_input[:, k]
+            + optical_input[:, k] + optical_noise[k,:,:]
         )
         controls[k] = control[0, 0]
         state[k, :] = current_states[:, 0]
     return state, measured_states, estimated_states, cov_aposteriori, controls
 
 
-"""
-@njit(nopython=True, cache=True)
-@cc_c.export(
-    "propagate_dynamics",
-    "Tuple((c16[:,:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:], i8))(c16[:,:], \
-      c16[:,:], c16[:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:], \
-          c16[:,:], i8)",
-)
-"""
+
 
 
 @jit(nopython=True)
@@ -171,14 +161,6 @@ def propagate_dynamics(
     return e_aposteriori, e_apriori, cov_aposteriori, cov_apriori, time_step
 
 
-"""@njit(nopython=True, cache=True)
-@cc_c.export(
-    "compute_aposteriori",
-    "Tuple((c16[:,:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:]))(c16[:,:], \
-      c16[:,:], c16[:,:], c16[:,:], c16[:,:,:], c16[:,:,:], c16[:,:,:],\
-            c16[:,:,:], c16[:,:,:], c16[:,:,:], i8)",
-)
-"""
 
 
 @jit(nopython=True)
@@ -208,6 +190,3 @@ def compute_aposteriori(
     cov_aposteriori[time_step] = Pk_plus
     return e_aposteriori, cov_aposteriori, kalman_errors, kalman_gain_matrices
 
-
-# if __name__ == "__main__":
-#    cc_c.compile()
