@@ -45,8 +45,6 @@ def compute_SNR(signal, left, right):
 def compute_phonons(estimations, cov_matrix, control_step, step=30):
     estimates = estimations[::control_step]
     sampled_cov_matrix = cov_matrix[:, :, :estimates.shape[0]]
-    print(estimates.shape, sampled_cov_matrix.shape)
-    sampled_cov_matrix = [el[0:, 0:] for el in cov_matrix[:estimates.shape[0]]]
     phonons = np.zeros(int(estimates.shape[0]/step)-1)
     for i in range(1, int(estimates.shape[0]/step)):
         averaged = estimates[(i-1)*step:i*step, 0:].mean(axis=0)
