@@ -2,20 +2,22 @@ import numpy as np
 from .constants import c
 
 
-def compute_optical_input(alpha_in, kappa, laser_linewidth, delta_t, N):
+def compute_optical_input(alpha_in, kappa, laser_linewidth, delta_t, N, detuning):
+    theta = np.arctan(detuning/kappa)
+    optical_noise = np.sqrt(laser_linewidth)*alpha_in*np.random.normal()
     x_in = (
-        np.sqrt(kappa)*delta_t* (
-            np.conjugate(alpha_in)
+        np.sqrt(kappa) * delta_t * (
+            (1/np.sqrt(kappa*delta_t))*np.sin(theta)*optical_noise
+            + np.conjugate(alpha_in)
             + alpha_in
             )
     )
-    optical_noise = np.sqrt(laser_linewidth)*alpha_in*np.random.normal()
     y_in = (
         1j
         * np.sqrt(kappa)
         * delta_t
         * (
-            (1/np.sqrt(kappa*delta_t))*optical_noise
+            (1/np.sqrt(kappa*delta_t))*np.cos(theta)*optical_noise
             + np.conjugate(alpha_in)
             - alpha_in
         )
@@ -27,7 +29,7 @@ def compute_optical_input(alpha_in, kappa, laser_linewidth, delta_t, N):
 
 
 def create_pulse(photon_number, kappa, laser_linewidth, t,
-                 cavity_length, cavity_linewidth,
+                 cavity_length, cavity_linewidth, detuning,
                  pulse_width=1):
     pulse_amplitude = photon_number**2
     N = t.shape[0]
@@ -40,5 +42,5 @@ def create_pulse(photon_number, kappa, laser_linewidth, t,
         np.sqrt(delta_t) * np.power(np.pi*pulse_width**2,1/4)) *\
         np.exp(-((np.arange(0, N, 1)-center)/(2*pulse_width**2))**2)
     optical_input = compute_optical_input(alpha_in, kappa, laser_linewidth,
-                                          delta_t, N)
+                                          delta_t, N, detuning)
     return optical_input, center, pulse_width
