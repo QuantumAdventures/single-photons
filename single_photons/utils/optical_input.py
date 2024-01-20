@@ -27,20 +27,18 @@ def compute_optical_input(alpha_in, kappa, laser_linewidth, delta_t, N, detuning
     optical_input[1, :] = y_in
     return optical_input
 
-
-def create_pulse(photon_number, kappa, laser_linewidth, t,
-                 cavity_length, cavity_linewidth, detuning,
-                 pulse_width=1):
-    pulse_amplitude = photon_number**2
+def create_pulse(photon_number, cavity_linewidth, laser_linewidth,
+                 t, cavity_length, detuning):
     N = t.shape[0]
     delta_t = np.diff(t)[0]
-    center = int(t.shape[0]/2)
+    amplitude = photon_number**2
+    center = int(N/2)
     round_trip_time = 2*cavity_length/c
-    trips = pulse_width/(2*np.pi*round_trip_time*cavity_linewidth)
-    pulse_width = trips*round_trip_time/delta_t
-    alpha_in = pulse_amplitude/(
-        np.sqrt(delta_t) * np.power(np.pi*pulse_width**2,1/4)) *\
-        np.exp(-((np.arange(0, N, 1)-center)/(2*pulse_width**2))**2)
-    optical_input = compute_optical_input(alpha_in, kappa, laser_linewidth,
-                                          delta_t, N, detuning)
-    return optical_input, center, pulse_width
+    trips = 1/(2*np.pi*round_trip_time*cavity_linewidth)
+    width = trips*round_trip_time/delta_t
+    alpha_in = amplitude/(
+        delta_t * np.power(2*np.pi*width**2,0.5)) *\
+        np.exp(-np.power(np.arange(0, N, 1, dtype=np.int64) - center,2)/(2*width**2))
+    optical_input = compute_optical_input(alpha_in, cavity_linewidth,
+                                          laser_linewidth, delta_t, N, detuning)
+    return optical_input, center, width

@@ -48,7 +48,7 @@ def compute_phonons(estimations, cov_matrix, control_step, step=30):
     phonons = np.zeros(int(estimates.shape[0]/step)-1)
     for i in range(1, int(estimates.shape[0]/step)):
         averaged = estimates[(i-1)*step:i*step, 0:].mean(axis=0)
-        second_moments = sampled_cov_matrix[i]+np.power(averaged, 2)
+        second_moments = sampled_cov_matrix[(i-1)*step:i*step].mean(axis = 0) + np.diag(np.power(averaged, 2))
         phonons[i-1] = np.trace(second_moments)/4-0.5
     return phonons
 
