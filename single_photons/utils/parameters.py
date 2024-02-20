@@ -1,5 +1,5 @@
 import numpy as np
-from .constants import kb, hbar, c, amu, m_gas
+from .constants import kb, hbar, c, amu, m_gas, epsilon_0
 
 def compute_zpx(omega, radius, rho = 2200):
     m_p = rho * (4 / 3) * np.pi * np.power(radius,3)
@@ -22,18 +22,6 @@ def compute_omega(power, waist, rho=2200, index_refraction=1.444):
     )
     return omega
 
-
-def compute_phonons(estimations, cov_matrix, step=100):
-    sampled_cov_matrix = cov_matrix[::step]
-    N = len(sampled_cov_matrix)
-    phonons = np.zeros((N - 1))
-    for i in range(1, N):
-        averaged = estimations[(i - 1) * step : i * step, :].mean(axis=0)
-        second_moments = sampled_cov_matrix[i] + np.power(averaged, 2)
-        phonons[i - 1] = np.trace(second_moments) / 4 - 0.5
-    return phonons
-
-
 def compute_scattered_power(
     power,
     waist,
@@ -45,10 +33,10 @@ def compute_scattered_power(
     k_tweezer = 2 * np.pi / wavelength
     pol_permit_ratio = 3 / Nm * (index_refraction**-1) / (index_refraction**2 + 2)
     sigma = (8 * np.pi / 3) * (
-        pol_permit_ratio * k_tweezer * k_tweezer / (4 * np.pi * 8.85e-12)
+        pol_permit_ratio * k_tweezer * k_tweezer / (4 * np.pi * epsilon_0)
     ) ** 2
     I0 = 2 * power / (np.pi * waist)
-    return 0.1 * I0 * sigma
+    return I0*sigma
 
 
 def compute_backaction(wavelength, p_scat, A=0.71):
@@ -61,11 +49,29 @@ def compute_ideal_detection(wavelength, p_scat, A=0.71):
     k = 2 * np.pi / wavelength
     return np.sqrt(2 * hbar * c / ((A**2 + 0.4) * 4 * k * p_scat))
 
-
+def compute_cavity_parameters(
+    cavity_linewidth,
+    cavity_length,
+    detuning,
+    wavelength
+):
+    cavity_freq = detuning + 2 * np.pi * c / wavelength
+    phi = 4 * np.pi * cavity_freq * cavity_length / c
+    FSR = c / (2 * cavity_length)
+    f = FSR / cavity_linewidth
+    '''(1-x)^2 = pi*x/f^2
+    x^2 + 1 - x*(pi/f^2 + 2) = 0
+    x = 1 + pi/2f^2 + 1/2*sqrt((pi/f^2 + 2)^2 - 4)'''
+    r = 1 + np.pi/(2*f**2) - 1/2 * np.sqrt((2 + np.pi/f**2)**2-4)
+    I_max = 1 / (1 - r)**2
+    I_factor = I_max / (1 + (2 * f * np.sin(phi/2) / np.pi)**2)
+    return FSR, f, r, I_factor
+    
 def compute_parameters_simulation(
     power,
     wavelength,
     tweezer_waist,
+    omega,
     radius,
     pressure,
     fs,
@@ -80,12 +86,6 @@ def compute_parameters_simulation(
         rho=rho,
         T=T,
     )
-    omega = compute_omega(
-        power,
-        tweezer_waist,
-        rho=rho,
-        index_refraction=index_refraction,
-    )
     p_scat = compute_scattered_power(
         power,
         tweezer_waist,
@@ -96,7 +96,7 @@ def compute_parameters_simulation(
     ba_force = compute_backaction(wavelength, p_scat)
     std_z = compute_ideal_detection(wavelength, p_scat)
     std_detection = std_z * np.sqrt(fs / (2 * eta_detection))
-    return gamma, omega, ba_force, std_detection, std_z
+    return gamma, ba_force, std_detection, std_z
 
 
 def compute_parameters_simulation_cavity(
@@ -108,9 +108,9 @@ def compute_parameters_simulation_cavity(
     fs,
     eta_detection,
     cavity_length,
-    cavity_waist,
     detuning_ratio,
-    cavity_linewidth_ratio,
+    cavity_linewidth,
+    omega,
     rho=2200,
     index_refraction=1.444,
     T=293,
@@ -121,12 +121,12 @@ def compute_parameters_simulation_cavity(
         rho=rho,
         T=T,
     )
-    omega = compute_omega(
+    '''omega = compute_omega(
         power,
         tweezer_waist,
         rho=rho,
         index_refraction=index_refraction,
-    )
+    )'''
     p_scat = compute_scattered_power(
         power,
         tweezer_waist,
@@ -138,21 +138,27 @@ def compute_parameters_simulation_cavity(
     std_z = compute_ideal_detection(wavelength, p_scat)
     std_detection = std_z * np.sqrt(fs / (2 * eta_detection))
     detuning = omega * detuning_ratio
-    cavity_linewidth = omega * cavity_linewidth_ratio
     cavity_freq = detuning + 2 * np.pi * c / wavelength
-    g_cs = (
+    cavity_waist = np.sqrt(c*cavity_length / cavity_freq)
+    V = 4/3 * np.pi * radius**3
+    Vc = np.pi * cavity_waist**2 * cavity_length/4
+    k = 2*np.pi/wavelength
+    alpha = 3 * epsilon_0 * V * (index_refraction**2 - 1)/(index_refraction**2 + 2)
+    E0 = np.sqrt(4 * power / (np.pi * tweezer_waist**2 * epsilon_0 * c))
+    Ec = np.sqrt(hbar * cavity_freq / (2 * epsilon_0 * Vc))
+    g_cs = 1/hbar * alpha * E0 * Ec * k * compute_zpx(omega, radius, rho = rho)
+
+    '''g_cs[0] = (
         np.power(12 / np.pi, 1 / 4)
         * np.power((index_refraction**2 - 1) / (index_refraction**2 + 2), 3 / 4)
         * np.power(power * radius**6 * cavity_freq**6 / (c**5 * rho), 1 / 4)
         / (np.sqrt(cavity_length) * cavity_waist)
-    )
+    )'''
     return (
         gamma,
-        omega,
         ba_force,
         std_detection,
         std_z,
         g_cs,
-        detuning,
-        cavity_linewidth,
+        detuning
     )

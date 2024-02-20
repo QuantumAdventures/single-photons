@@ -62,7 +62,7 @@ def simulation_p(
     kalman_time_step = 0
     for k in range(N_time):
         if not k % control_step:
-            measured_states[k] = current_states[1, 0] + detect_std * np.random.normal()
+            measured_states[k] = current_states[0, 0] + detect_std * np.random.normal()
             (
                 e_aposteriori,
                 e_apriori,
@@ -78,7 +78,7 @@ def simulation_p(
                 cov_aposteriori,
                 cov_apriori,
                 control,
-                kalman_time_step,
+                kalman_time_step
             )
             (
                 e_aposteriori,
@@ -141,7 +141,7 @@ def propagate_dynamics(
     control,
     time_step,
 ):
-    xk_minus = Ad @ e_aposteriori[time_step] + Bd * control
+    xk_minus = Ad @ e_aposteriori[time_step] + Bd @ control
     Pk_minus = Ad @ (cov_aposteriori[time_step] @ (Ad.T)) + Q
     e_apriori[time_step] = xk_minus
     cov_apriori[time_step] = Pk_minus
@@ -174,13 +174,20 @@ def compute_aposteriori(
     kalman_errors,
     time_step,
 ):
+    '''error_k = measurement - C @ e_apriori[time_step - 1]
+    s_k = C @ cov_apriori[time_step-1] @ C.T + R #
+    Kk = cov_apriori[time_step-1] @ C.T @ np.linalg.pinv(s_k) #
+    xk_plus = e_apriori[time_step-1] + Kk @ error_k
+    Pk_plus = cov_apriori[time_step-1] - Kk @ s_k @ Kk.T#'''
+    
+    error_k = measurement - C @ e_apriori[time_step - 1]
     Kk = cov_apriori[time_step - 1] @ (
         C.T @ np.linalg.pinv(R + C @ (cov_apriori[time_step - 1] @ (C.T)))
     )
-    error_k = measurement - C @ e_apriori[time_step - 1]
-    xk_plus = e_apriori[time_step - 1] + Kk @ error_k
     IminusKkC = np.eye(estimation.shape[0]) - Kk @ C
+    xk_plus = e_apriori[time_step-1] + Kk @ error_k
     Pk_plus = IminusKkC @ (cov_apriori[time_step - 1] @ (IminusKkC.T)) + Kk @ (R @ Kk.T)
+    
     kalman_gain_matrices[time_step] = Kk
     kalman_errors[time_step] = error_k
     e_aposteriori[time_step] = xk_plus

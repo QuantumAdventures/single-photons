@@ -49,7 +49,6 @@ def simulation_c(
     e_aposteriori[0, :, :] = estimation
     e_apriori = np.zeros((kalman_array_size, 4, 1)).astype(np.complex_)
     cov_aposteriori = np.zeros((kalman_array_size + 1, 4, 4)).astype(np.complex_)
-    P0 = float(P0) * np.eye(4).astype(np.complex_)
     cov_aposteriori[0, :, :] = P0
     cov_apriori = np.zeros((kalman_array_size, 4, 4)).astype(np.complex_)
     kalman_gain_matrices = np.zeros((kalman_array_size, 4, 1)).astype(np.complex_)
@@ -60,8 +59,8 @@ def simulation_c(
     estimated_states = np.zeros((N_time, 4)).astype(np.complex_)
     current_states = x0 * np.array(
         [
-            [np.random.normal()],
-            [np.random.normal()],
+            [0.],
+            [0.],
             [np.random.normal()],
             [np.random.normal()],
         ]

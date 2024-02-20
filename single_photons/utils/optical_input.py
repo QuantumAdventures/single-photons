@@ -29,6 +29,7 @@ def compute_optical_input(alpha_in, kappa, laser_linewidth, delta_t, N, detuning
 
 def create_pulse(photon_number, cavity_linewidth, laser_linewidth,
                  t, cavity_length, detuning):
+    amplitude = photon_number**2
     N = t.shape[0]
     delta_t = np.diff(t)[0]
     amplitude = photon_number**2
