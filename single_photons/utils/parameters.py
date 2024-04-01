@@ -31,7 +31,7 @@ def compute_scattered_power(
 ):
     Nm = rho / (amu * 60.08)
     k_tweezer = 2 * np.pi / wavelength
-    pol_permit_ratio = 3 / Nm * (index_refraction**-1) / (index_refraction**2 + 2)
+    pol_permit_ratio = 3 / Nm * (index_refraction**2 - 1) / (index_refraction**2 + 2)
     sigma = (8 * np.pi / 3) * (
         pol_permit_ratio * k_tweezer * k_tweezer / (4 * np.pi * epsilon_0)
     ) ** 2
