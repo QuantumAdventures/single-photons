@@ -55,8 +55,8 @@ def compute_cavity_parameters(
     detuning,
     wavelength
 ):
-    cavity_freq = detuning + 2 * np.pi * c / wavelength
-    phi = 4 * np.pi * cavity_freq * cavity_length / c
+    beam_freq = 2 * np.pi * c / wavelength
+    phi = 4 * np.pi * beam_freq * cavity_length / c
     FSR = c / (2 * cavity_length)
     f = FSR / cavity_linewidth
     '''(1-x)^2 = pi*x/f^2
@@ -138,20 +138,20 @@ def compute_parameters_simulation_cavity(
     std_z = compute_ideal_detection(wavelength, p_scat)
     std_detection = std_z * np.sqrt(fs / (2 * eta_detection))
     detuning = omega * detuning_ratio
-    cavity_freq = detuning + 2 * np.pi * c / wavelength
-    cavity_waist = np.sqrt(c*cavity_length / cavity_freq)
+    beam_freq = 2 * np.pi * c / wavelength
+    cavity_waist = np.sqrt(c*cavity_length / beam_freq)
     V = 4/3 * np.pi * radius**3
     Vc = np.pi * cavity_waist**2 * cavity_length/4
     k = 2*np.pi/wavelength
     alpha = 3 * epsilon_0 * V * (index_refraction**2 - 1)/(index_refraction**2 + 2)
     E0 = np.sqrt(4 * power / (np.pi * tweezer_waist**2 * epsilon_0 * c))
-    Ec = np.sqrt(hbar * cavity_freq / (2 * epsilon_0 * Vc))
+    Ec = np.sqrt(hbar * beam_freq / (2 * epsilon_0 * Vc))
     g_cs = 1/hbar * alpha * E0 * Ec * k * compute_zpx(omega, radius, rho = rho)
 
     '''g_cs[0] = (
         np.power(12 / np.pi, 1 / 4)
         * np.power((index_refraction**2 - 1) / (index_refraction**2 + 2), 3 / 4)
-        * np.power(power * radius**6 * cavity_freq**6 / (c**5 * rho), 1 / 4)
+        * np.power(power * radius**6 * beam_freq**6 / (c**5 * rho), 1 / 4)
         / (np.sqrt(cavity_length) * cavity_waist)
     )'''
     return (
