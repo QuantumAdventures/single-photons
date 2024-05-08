@@ -49,24 +49,23 @@ def compute_ideal_detection(wavelength, p_scat, A=0.71):
     k = 2 * np.pi / wavelength
     return np.sqrt(2 * hbar * c / ((A**2 + 0.4) * 4 * k * p_scat))
 
+
 def compute_cavity_parameters(
     cavity_linewidth,
     cavity_length,
     detuning,
     wavelength
 ):
-    beam_freq = 2 * np.pi * c / wavelength
+    beam_freq = (detuning/2*np.pi) + (c / wavelength)
     phi = 4 * np.pi * beam_freq * cavity_length / c
     FSR = c / (2 * cavity_length)
-    f = FSR / cavity_linewidth
-    '''(1-x)^2 = pi*x/f^2
-    x^2 + 1 - x*(pi/f^2 + 2) = 0
-    x = 1 + pi/2f^2 + 1/2*sqrt((pi/f^2 + 2)^2 - 4)'''
+    f = FSR / (cavity_linewidth/(2*np.pi))
     r = 1 + np.pi/(2*f**2) - 1/2 * np.sqrt((2 + np.pi/f**2)**2-4)
     I_max = 1 / (1 - r)**2
     I_factor = I_max / (1 + (2 * f * np.sin(phi/2) / np.pi)**2)
     return FSR, f, r, I_factor
-    
+
+
 def compute_parameters_simulation(
     power,
     wavelength,

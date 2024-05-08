@@ -71,7 +71,7 @@ def compute_phonons(estimations, cov_matrix, control_step, step=30, cavity_bool 
     for i in range(1, int(estimates.shape[0]/step)):
         averaged = estimates[(i-1)*step:i*step, 0:].mean(axis=0)
         second_moments = sampled_cov_matrix[i-1] + np.power(averaged, 2)
-        phonons[i-1] = np.trace(second_moments)/4 - 0.5
+        phonons[i-1] = np.trace(np.real(second_moments))/4 - 0.5
         if cavity_bool:
             phonons[i-1] = phonons[i-1] + 3/4 * np.trace(second_moments[:2,:2]) - 0.5
     return phonons
