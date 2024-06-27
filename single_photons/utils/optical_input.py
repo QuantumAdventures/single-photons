@@ -1,31 +1,26 @@
 import numpy as np
+import scipy
+from single_photons.utils.parameters import *
 from .constants import c
 
-
-def compute_optical_input(alpha_in, kappa, laser_linewidth, delta_t, N, detuning):
-    theta = np.arctan(detuning/kappa)
-    optical_noise = np.sqrt(laser_linewidth)*alpha_in*np.random.normal()
-    x_in = (
-        np.sqrt(kappa) * delta_t * (
-            (1/np.sqrt(kappa*delta_t))*np.sin(theta)*optical_noise
-            + np.conjugate(alpha_in)
-            + alpha_in
-            )
-    )
-    y_in = (
-        1j
-        * np.sqrt(kappa)
-        * delta_t
-        * (
-            (1/np.sqrt(kappa*delta_t))*np.cos(theta)*optical_noise
-            + np.conjugate(alpha_in)
-            - alpha_in
-        )
-    )
-    optical_input = 1j*np.zeros((4, N))
-    optical_input[0, :] = x_in
-    optical_input[1, :] = y_in
-    return optical_input
+def compute_optical_input(N, delta_t, env, laser_linewidth, photon_number, cavity_length, wavelength, duration):
+    theta = np.arctan(env.__detuning__/env.__kappa__)
+    
+    Ad_sim = scipy.linalg.expm(env.A * delta_t)
+    optical_injection_matrix = (Ad_sim - np.eye(4)) @ np.linalg.pinv(env.A)
+    FSR, f, r, I_factor = compute_cavity_parameters(env.__kappa__, cavity_length, env.__detuning__, wavelength)
+    amplitude = np.sqrt(photon_number * I_factor)
+    optical_input = 1j*np.zeros((4,N))
+    end = int(duration/delta_t)
+    end = min(N,int(N/2) + end)
+    s = end - int(N/2)
+    noise = np.random.normal(size = s)
+    optical_input[0,int(N/2):end] = np.array(s*[(np.conjugate(amplitude) + amplitude) * np.sqrt(env.__kappa__)]) + np.sin(theta)*np.sqrt(laser_linewidth)*amplitude*noise
+    optical_input[1,int(N/2):end] = np.array(s*[1j*(np.conjugate(amplitude) - amplitude) * np.sqrt(env.__kappa__)]) + np.cos(theta)*np.sqrt(laser_linewidth)*amplitude*noise
+    for i in range(int(N/2), end):
+        x,y = optical_input[0:2,i]
+        optical_input[0:2, i] = optical_injection_matrix[:2,:2] @ np.array([x,y])
+    return FSR, f, r, I_factor, optical_input
 
 def create_pulse(photon_number, cavity_linewidth, laser_linewidth,
                  t, cavity_length, detuning):
