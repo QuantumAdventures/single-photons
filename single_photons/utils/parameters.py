@@ -49,6 +49,9 @@ def compute_ideal_detection(wavelength, p_scat, A=0.71):
     k = 2 * np.pi / wavelength
     return np.sqrt(2 * hbar * c / ((A**2 + 0.4) * 4 * k * p_scat))
 
+def compute_resonance_length(cavity_length, wavelength):
+    ratio = 2*cavity_length//wavelength
+    return ratio*wavelength
 
 def compute_cavity_parameters(
     cavity_linewidth,
