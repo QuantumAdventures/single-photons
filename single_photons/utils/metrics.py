@@ -59,9 +59,9 @@ def compute_SNR(signal, left, right):
     crop = signal[left:right]
     size = crop.shape[0]
     size = int(min(size, left))
-    reference = signal[:size]
+    reference = signal[left-size:left]
     SNR = np.mean(np.square(crop)) / np.mean(np.square(reference))
-    return SNR
+    return 10*np.log10(SNR)
 
 
 def compute_phonons(estimations, cov_matrix, control_step, step=30, cavity_bool = 0):
